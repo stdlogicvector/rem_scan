@@ -1,5 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity control is
 	Port (
@@ -14,6 +15,7 @@ entity control is
 		
 		SCAN_START_O	: out	STD_LOGIC := '0';
 		SCAN_ABORT_O	: out	STD_LOGIC := '0';
+		SCAN_BUSY_O		: out	STD_LOGIC := '0';
 		
 		CTRL_DELAY_I	: in  STD_LOGIC_VECTOR (15 downto 0)
 	);
@@ -51,21 +53,24 @@ begin
 			when S_IDLE =>
 				if (SCAN_START_I = '1')
 				then
-					CONTROL_O <= '1';
+					CONTROL_O	<= '1';
+					SCAN_BUSY_O <= '1';
 					timer	<= (others => '0');
-					state <= S_DELAY;
+					state	<= S_DELAY;
 				else
-					CONTROL_O <= '0';
+					SCAN_BUSY_O <= '0';
+					CONTROL_O	<= '0';
 				end if;
 				
 			when S_DELAY =>
 				if (timer(23 downto 8) >= CTRL_DELAY_I)
 				then
-					SCAN_START_O <= '1';
 					state <= S_START;
 				end if;
 				
 			when S_START =>
+				SCAN_START_O <= '1';
+				
 				if (SCAN_BUSY_I = '1')
 				then
 					state <= S_SCAN;

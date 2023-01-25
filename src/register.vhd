@@ -18,8 +18,7 @@ entity registers is
 		DATA_O		: out STD_LOGIC_VECTOR (15 downto 0);
 		DATA_I		: in  STD_LOGIC_VECTOR (15 downto 0);
 		
-		REGISTER_O	: out array16_t(0 to NR_OF_REGS-1);
-		REGISTER_I	: in  array16_t(0 to NR_OF_REGS-1)
+		REGISTER_O	: out array16_t(0 to NR_OF_REGS-1)
 	);
 end registers;
 
@@ -39,10 +38,10 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 12	=> x"0100",		-- DELTA X
 13	=> x"0100",		-- DELTA Y
 
-16 => x"0000",		-- CTRL DELAY (2560ns steps)
-17	=> x"0000",		-- INI DELAY (10ns steps)
-18	=> x"0000",		-- COL DELAY (10ns steps)
-19	=> x"0000",		-- ROW DELAY (10ns steps)#
+16	=> x"0002",		-- CTRL DELAY (2560ns steps) 0us-167.77216ms
+17	=> x"0064",		-- INI DELAY  (  10ns steps) 0us-655.36us
+18	=> x"0064",		-- COL DELAY  (  10ns steps) 0us-655.36us
+19	=> x"0064",		-- ROW DELAY  (  10ns steps) 0us-655.36us
 
 20 => x"4000",		-- Transform Matrix C00
 21 => x"0000",		-- Transform Matrix C01
@@ -51,7 +50,7 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 24 => x"4000",		-- Transform Matrix C11
 25 => x"0000",		-- Transform Matrix C12
 
-28	=> int2vec(integer(CLOCK_MHZ), 16),	-- Sys Clk (MHz)
+28	=> int2vec(integer(CLOCK_MHZ), 16),		-- Sys Clk (MHz)
 29	=> int2vec(1, 16),						-- PCB VERSION 
 30	=> int2vec(VERSION, 16),				-- FPGA VERSION
 31	=> int2vec(BUILD, 16),					-- FPGA BUILD
@@ -72,7 +71,7 @@ begin
 rw : process(CLK_I)
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			DATA_O  <= (others => '0');
 		else
 			DATA_O  <= reg(vec2int(ADDR_I(ADDR_WIDTH downto 0)));
@@ -85,6 +84,8 @@ begin
 		end if;
 	end if;
 end process rw;
+
+REGISTER_O <= reg;
 
 end Behavioral;
 

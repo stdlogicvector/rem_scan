@@ -6,22 +6,22 @@ use IEEE.STD_LOGIC_MISC.ALL;
 
 entity dac is
 	generic (
-		CHANNELS		: integer range 1 to 4 := 2
+		CHANNELS	: integer range 1 to 4 := 2
 	);
 	port (
 		CLK_I 		: in  STD_LOGIC;
-		RST_I			: in	STD_LOGIC;
+		RST_I		: in	STD_LOGIC;
 	
 		CLEAR_I		: in  STD_LOGIC;
 	
-		DV_I			: in  STD_LOGIC_VECTOR (CHANNELS-1 downto 0);
-		CH0_I		 	: in  STD_LOGIC_VECTOR (15 downto 0);
-		CH1_I		 	: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
-		CH2_I		 	: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
-		CH3_I		 	: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		DV_I		: in  STD_LOGIC_VECTOR (CHANNELS-1 downto 0);
+		CH0_I		: in  STD_LOGIC_VECTOR (15 downto 0);
+		CH1_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		CH2_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		CH3_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
 		
-		DV_RAW_I		: in	STD_LOGIC;
-		RAW_I			: in	STD_LOGIC_VECTOR (23 downto 0);
+		DV_RAW_I	: in	STD_LOGIC;
+		RAW_I		: in	STD_LOGIC_VECTOR (23 downto 0);
 
 		BUSY_O		: out	STD_LOGIC := '1';	-- Default busy because of init sequence on reset
 		DONE_O		: out	STD_LOGIC := '0';
@@ -32,7 +32,7 @@ entity dac is
 		CMD_O 	 	: out STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
 		
 		-- Special Pins
-		CLEARn_O		: out STD_LOGIC := '0';
+		CLEARn_O	: out STD_LOGIC := '0';
 		LOADn_O		: out STD_LOGIC := '0'
 	);
 end dac;
@@ -53,7 +53,7 @@ constant CH_0	: std_logic_vector(2 downto 0) := b"000";
 constant CH_1	: std_logic_vector(2 downto 0) := b"001";
 constant CH_2	: std_logic_vector(2 downto 0) := b"010";
 constant CH_3	: std_logic_vector(2 downto 0) := b"011";
-constant CH_ALL: std_logic_vector(2 downto 0) := b"100";
+constant CH_ALL	: std_logic_vector(2 downto 0) := b"100";
 
 constant CTL_CFG	: std_logic_vector(2 downto 0) := b"001";
 constant CTL_CLR	: std_logic_vector(2 downto 0) := b"100";
@@ -61,9 +61,9 @@ constant CTL_LOD	: std_logic_vector(2 downto 0) := b"101";
 
 type channel_array is array(0 to 3) of STD_LOGIC_VECTOR(15 downto 0);
 
-signal ch_reg	 : channel_array := (others => (others => '0'));
-signal raw_reg	 : STD_LOGIC_VECTOR(23 downto 0) := (others => '0');
-signal new_reg  : STD_LOGIC_VECTOR(3 downto 0) := "0000";
+signal ch_reg	: channel_array := (others => (others => '0'));
+signal raw_reg	: STD_LOGIC_VECTOR(23 downto 0) := (others => '0');
+signal new_reg	: STD_LOGIC_VECTOR(CHANNELS-1 downto 0) := (others => '0');
 signal busy_reg : STD_LOGIC := '0';
 
 signal ch		 : integer range 0 to CHANNELS-1 := 0;
@@ -106,7 +106,7 @@ begin
 		else
 			DONE_O	 	<= '0';
 			SEND_O   	<= '0';
-			LOADn_O 		<= '1';
+			LOADn_O 	<= '1';
 			CLEARn_O 	<= '1';
 			busy_reg  	<= BUSY_I;
 		
@@ -136,15 +136,15 @@ begin
 					
 					if (RAW_I(7 downto 0) = x"42")
 					then
-						state		<= SEND_INIT;
+						state	<= SEND_INIT;
 					else
 						raw_reg	<= RAW_I;
-						state		<= SEND_RAW;
+						state	<= SEND_RAW;
 					end if;
 				elsif (CLEAR_I = '1')
 				then
 					BUSY_O	<= '1';
-					state		<= WAIT_CLEAR;
+					state	<= WAIT_CLEAR;
 				end if;
 				
 			when WAIT_INIT =>
@@ -152,19 +152,19 @@ begin
 				
 				if (delay_cnt = 100)
 				then
-					delay_cnt <= (others => '0');
-					state		 <= SEND_INIT;
+					delay_cnt	<= (others => '0');
+					state		<= SEND_INIT;
 				else
-					delay_cnt <= delay_cnt + '1';
+					delay_cnt	<= delay_cnt + '1';
 				end if;
 				
 			when SEND_INIT =>
 				if (busy_reg = '0')
 				then
-					CMD_O		<= init(step);
+					CMD_O	<= init(step);
 					SEND_O	<= '1';
 				else
-					state		<= TRANSMIT_INIT;
+					state	<= TRANSMIT_INIT;
 				end if;
 				
 			when TRANSMIT_INIT =>

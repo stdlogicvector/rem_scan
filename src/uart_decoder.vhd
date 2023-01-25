@@ -9,11 +9,11 @@ use Work.util.all;
 entity uart_decoder is
 	generic (
 		DATA_BITS		: integer := 8;
-		MAX_ARGS			: integer := 10
+		MAX_ARGS		: integer := 10
 	);
 	port (
-		RESET_I			: in	std_logic;
-		CLK_I				: in	std_logic;		
+		RST_I			: in	std_logic;
+		CLK_I			: in	std_logic;		
 		
 		TX_BUSY_O		: out	std_logic := '0';
 		RX_BUSY_O		: out	std_logic := '0';
@@ -32,7 +32,8 @@ entity uart_decoder is
 	-- control connections
 		NEW_CMD_O		: out	std_logic := '0';
 		CMD_ACK_I 		: in	std_logic;
-		CMD_ID_O			: out	std_logic_vector(DATA_BITS-1 downto 0) := (others => '0');
+		CMD_NACK_I 		: in	std_logic := '0';
+		CMD_ID_O		: out	std_logic_vector(DATA_BITS-1 downto 0) := (others => '0');
 		CMD_ARGS_O		: out	std_logic_vector((MAX_ARGS*DATA_BITS)-1 downto 0) := (others => '0');
 		
 		NEW_ACK_I		: in	std_logic;
@@ -41,8 +42,8 @@ entity uart_decoder is
 		NEW_REPLY_I		: in 	std_logic;
 		REPLY_ACK_O		: out	std_logic := '0';
 		REPLY_ID_I		: in	std_logic_vector(DATA_BITS-1 downto 0);
-		REPLY_ARGS_I	: in  std_logic_vector((MAX_ARGS*DATA_BITS)-1 downto 0);
-		REPLY_ARGN_I	: in  std_logic_vector(clogb2(MAX_ARGS)-1 downto 0)
+		REPLY_ARGS_I	: in  	std_logic_vector((MAX_ARGS*DATA_BITS)-1 downto 0);
+		REPLY_ARGN_I	: in  	std_logic_vector(clogb2(MAX_ARGS)-1 downto 0)
 	);
 end uart_decoder;
 
@@ -111,7 +112,7 @@ begin
 get_chars : process(CLK_I) -- Get Chars from UART RX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			rx_char	 <= (others => '0');
 			new_char <= '0';
 			
@@ -143,7 +144,7 @@ end process get_chars;
 parse : process(CLK_I)		-- Parse Chars into Command ID and Command ARGS
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			cmd_active	<= '0';
 			p_state		<= S_WAIT_FOR_START;
 			rx_arg 		<= (others => '0');
@@ -178,8 +179,8 @@ begin
 						
 					when S_CMD_ARG =>
 						case rx_char(7 downto 4) is																																-- Convert 2 ASCII chars into one byte
-						when "0011" 			=> rx_args(vec2int(rx_arg)) <= rx_args(vec2int(rx_arg))(3 downto 0) & rx_char(3 downto 0);				-- 0..9
-						when "0100" | "0110" => rx_args(vec2int(rx_arg)) <= rx_args(vec2int(rx_arg))(3 downto 0) & (rx_char(3 downto 0) + x"9");	-- A..F | a..f
+						when "0011" 			=> rx_args(vec2int(rx_arg)) <= rx_args(vec2int(rx_arg))(3 downto 0) & rx_char(3 downto 0);			-- 0..9
+						when "0100" | "0110" 	=> rx_args(vec2int(rx_arg)) <= rx_args(vec2int(rx_arg))(3 downto 0) & (rx_char(3 downto 0) + x"9");	-- A..F | a..f
 						when others 			=> rx_args(vec2int(rx_arg)) <= rx_args(vec2int(rx_arg))(3 downto 0) & b"0000";
 						end case;
 						
@@ -210,7 +211,7 @@ RX_BUSY_O	 <= handler_busy OR cmd_active OR new_cmd;
 handle : process(CLK_I)		-- Output new Command and wait for reply
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			handler_busy	<= '0';
 			CMD_ID_O		<= (others => '0');
 			CMD_ARGS_O		<= (others => '0');
@@ -237,7 +238,12 @@ begin
 			when S_WAIT_FOR_REPLY_ACK =>
 				if (CMD_ACK_I = '1') then
 					NEW_CMD_O	<= '0';
-					h_state <= S_WAIT_FOR_REPLY_FINISH;
+					h_state 	<= S_WAIT_FOR_REPLY_FINISH;
+				end if;
+				
+				if (CMD_NACK_I = '1') then
+					NEW_CMD_O	<= '0';
+					h_state 	<= S_WAIT_FOR_CMD;
 				end if;
 				
 			when S_WAIT_FOR_REPLY_FINISH =>
@@ -253,7 +259,7 @@ end process handle;
 reply : process(CLK_I)		-- Take incoming reply and put chars into UART TX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			reply_sent		<= '0';
 			PUT_CHAR_O 		<= '0';
 			r_state			<= S_WAIT_FOR_REPLY;

@@ -13,18 +13,18 @@ entity uart_fast_rx is
 		ALIGNMENT	: boolean := false
 	);
 	port (
-		RST_I			: in	STD_LOGIC;
-		CLK_I			: in	STD_LOGIC;
+		RST_I		: in	STD_LOGIC;
+		CLK_I		: in	STD_LOGIC;
 
-		ENABLE_I		: in	STD_LOGIC := '1';
+		ENABLE_I	: in	STD_LOGIC := '1';
 		
-		RX_I			: in	STD_LOGIC := NOT START_BIT;
+		RX_I		: in	STD_LOGIC := NOT START_BIT;
 		
 		RX_CHAR_O	: out	STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
 		RECV_O		: out	STD_LOGIC := '0';
 		BUSY_O		: out	STD_LOGIC := '0';
 		
-		ERR_O			: out	STD_LOGIC := '0'
+		ERR_O		: out	STD_LOGIC := '0'
 	);
 end uart_fast_rx;
 

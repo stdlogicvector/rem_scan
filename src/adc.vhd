@@ -9,10 +9,10 @@ entity adc is
 		
 		SAMPLE_I	: IN STD_LOGIC;
 
-		CONV_O	: OUT STD_LOGIC := '0';
+		CONV_O		: OUT STD_LOGIC := '0';
 		SCK_O		: OUT STD_LOGIC := '0';
-		SD0_I 	: IN  STD_LOGIC;
-		SD1_I 	: IN  STD_LOGIC;
+		SD0_I 		: IN  STD_LOGIC;
+		SD1_I 		: IN  STD_LOGIC;
 
 		DV_O 		: OUT STD_LOGIC := '0';
 		CH0_O		: OUT STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
@@ -36,7 +36,7 @@ begin
 
 SCK_FWD : ODDR2
 	generic map (
-		DDR_ALIGNMENT => "NONE", 	-- Sets output alignment to "NONE", "C0", "C1" 
+		DDR_ALIGNMENT => "NONE", 		-- Sets output alignment to "NONE", "C0", "C1" 
 		INIT => '0', 					-- Sets initial state of the Q output to '0' or '1'
 		SRTYPE => "SYNC"				-- Specifies "SYNC" or "ASYNC" set/RST_I
 	)

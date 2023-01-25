@@ -6,23 +6,23 @@ use work.util.all;
 entity uart is
 	generic (
 		CLK_MHZ		: real := 100.0;
-		BAUDRATE		: integer := 921600;
+		BAUDRATE	: integer := 921600;
 		DATA_BITS	: integer := 8;				-- 6, 7, 8, 9
 		PARITY_BIT	: character := 'N';			-- N(one), O(dd), E(ven)
-		STOP_BITS	: real := 1.0;					-- 1.0, 1.5, 2.0
+		STOP_BITS	: real := 1.0;				-- 1.0, 1.5, 2.0
 		START_BIT	: std_logic := '0'
 	);
 	port (
-		RESET_I		: in	STD_LOGIC;
-		CLK_I			: in	STD_LOGIC;	
+		RST_I		: in	STD_LOGIC;
+		CLK_I		: in	STD_LOGIC;	
 		
-		TX_O			: out	STD_LOGIC;
-		RX_I			: in	STD_LOGIC := NOT START_BIT;
+		TX_O		: out	STD_LOGIC;
+		RX_I		: in	STD_LOGIC := NOT START_BIT;
 		
-		TX_DONE_O 	: out STD_LOGIC := '0';
+		TX_DONE_O 	: out 	STD_LOGIC := '0';
 		
 		PUT_CHAR_I	: in	STD_LOGIC;
-		PUT_ACK_O	: out STD_LOGIC := '0';
+		PUT_ACK_O	: out 	STD_LOGIC := '0';
 		TX_CHAR_I	: in 	STD_LOGIC_VECTOR(DATA_BITS-1 downto 0);
 		TX_FULL_O	: out	STD_LOGIC := '0';
 		
@@ -59,27 +59,27 @@ signal rx_state : rx_state_t := S_RX_IDLE;
 
 -- FIFO Signals
 
-signal tx_fifo_write		: STD_LOGIC := '0';
+signal tx_fifo_write	: STD_LOGIC := '0';
 signal tx_fifo_read		: STD_LOGIC := '0';
 signal tx_fifo_full		: STD_LOGIC := '0';
-signal tx_fifo_empty		: STD_LOGIC := '0';
-signal tx_fifo_wrerr		: STD_LOGIC := '0';
-signal tx_fifo_rderr		: STD_LOGIC := '0';
-signal tx_fifo_wrack		: STD_LOGIC := '0';
-signal tx_fifo_valid		: STD_LOGIC := '0';
+signal tx_fifo_empty	: STD_LOGIC := '0';
+signal tx_fifo_wrerr	: STD_LOGIC := '0';
+signal tx_fifo_rderr	: STD_LOGIC := '0';
+signal tx_fifo_wrack	: STD_LOGIC := '0';
+signal tx_fifo_valid	: STD_LOGIC := '0';
 signal tx_fifo_din		: STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
-signal tx_fifo_dout		: STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
+signal tx_fifo_dout		: STD_LOGIC_VECTOR(9-1 downto 0) := (others => '0');
 
-signal rx_fifo_write		: STD_LOGIC := '0';
+signal rx_fifo_write	: STD_LOGIC := '0';
 signal rx_fifo_read		: STD_LOGIC := '0';
 signal rx_fifo_full		: STD_LOGIC := '0';
-signal rx_fifo_empty		: STD_LOGIC := '0';
-signal rx_fifo_wrerr		: STD_LOGIC := '0';
-signal rx_fifo_rderr		: STD_LOGIC := '0';
-signal rx_fifo_wrack		: STD_LOGIC := '0';
-signal rx_fifo_valid		: STD_LOGIC := '0';
+signal rx_fifo_empty	: STD_LOGIC := '0';
+signal rx_fifo_wrerr	: STD_LOGIC := '0';
+signal rx_fifo_rderr	: STD_LOGIC := '0';
+signal rx_fifo_wrack	: STD_LOGIC := '0';
+signal rx_fifo_valid	: STD_LOGIC := '0';
 signal rx_fifo_din		: STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
-signal rx_fifo_dout		: STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
+signal rx_fifo_dout		: STD_LOGIC_VECTOR(9-1 downto 0) := (others => '0');
 
 begin
 
@@ -92,10 +92,10 @@ tx_fsm : entity work.uart_fast_tx
 		START_BIT	=> START_BIT
 	)
 	PORT MAP (
-		RST_I			=> RESET_I,
-		CLK_I			=> CLK_I,
+		RST_I		=> RST_I,
+		CLK_I		=> CLK_I,
 		
-		TX_O			=> TX_O,
+		TX_O		=> TX_O,
 		
 		TX_CHAR_I	=> tx_char,
 		SEND_I		=> send,
@@ -111,15 +111,15 @@ port map (
 	rst			=> fifo_reset(fifo_reset'high),
 	clk			=> CLK_I,
 	
-	wr_en			=> tx_fifo_write,
-	overflow		=> tx_fifo_wrerr,
-	full 			=> tx_fifo_full,
-	din 			=> zero_resize(tx_fifo_din, 9),
+	wr_en		=> tx_fifo_write,
+	overflow	=> tx_fifo_wrerr,
+	full 		=> tx_fifo_full,
+	din 		=> zero_resize(tx_fifo_din, 9),
 	
-	rd_en			=> tx_fifo_read,
+	rd_en		=> tx_fifo_read,
 	underflow	=> tx_fifo_rderr, 	
 	empty 		=> tx_fifo_empty,
-	dout(DATA_BITS-1 downto 0)	=> tx_fifo_dout
+	dout		=> tx_fifo_dout
 );
 
 tx_ack : process (CLK_I)
@@ -135,7 +135,7 @@ TX_FULL_O <= tx_fifo_full;
 input : process(CLK_I)		-- Put chars into TX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			in_state 		<= S_IN_IDLE;
 			tx_fifo_write	<= '0';
 			tx_fifo_din 	<= (others => '0');
@@ -181,7 +181,7 @@ end process input;
 transmit : process(CLK_I)		-- Transmit chars TX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			tx_state 		<= S_TX_IDLE;
 			tx_char			<= (others => '0');
 			tx_fifo_read 	<= '0';
@@ -199,7 +199,7 @@ begin
 			when S_TX_READ =>
 				if (tx_fifo_valid = '1') then
 					tx_fifo_read 	<= '0';
-					tx_char 		<= tx_fifo_dout;
+					tx_char 		<= tx_fifo_dout(DATA_BITS-1 downto 0);
 					send 			<= '1';
 					tx_state 		<= S_TX_PUT;
 				end if;
@@ -234,10 +234,10 @@ rx_fsm : entity work.uart_fast_rx
 		ALIGNMENT	=> FALSE
 	)
 	PORT MAP (
-		RST_I			=> RESET_I,
-		CLK_I			=> CLK_I,
+		RST_I		=> RST_I,
+		CLK_I		=> CLK_I,
 		
-		RX_I			=> RX_I,
+		RX_I		=> RX_I,
 		
 		RX_CHAR_O	=> rx_char,
 		RECV_O		=> recv
@@ -252,15 +252,15 @@ port map (
 	rst			=> fifo_reset(fifo_reset'high),
 	clk			=> CLK_I,
 	
-	wr_en			=> rx_fifo_write,
-	overflow		=> rx_fifo_wrerr,
-	full 			=> rx_fifo_full,
-	din 			=> zero_resize(rx_fifo_din, 9),
+	wr_en		=> rx_fifo_write,
+	overflow	=> rx_fifo_wrerr,
+	full 		=> rx_fifo_full,
+	din 		=> zero_resize(rx_fifo_din, 9),
 	
-	rd_en			=> rx_fifo_read,
+	rd_en		=> rx_fifo_read,
 	underflow	=> rx_fifo_rderr, 	
 	empty 		=> rx_fifo_empty,
-	dout(DATA_BITS-1 downto 0)	=> rx_fifo_dout
+	dout		=> rx_fifo_dout
 );
 
 rx_ack : process (CLK_I)
@@ -276,7 +276,7 @@ RX_EMPTY_O <= rx_fifo_empty;
 output : process(CLK_I)		-- Take chars from RX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			out_state 		<= S_OUT_IDLE;
 			rx_fifo_read 	<= '0';
 			RX_CHAR_O 		<= (others => '0');
@@ -293,7 +293,7 @@ begin
 			when S_OUT_READ =>
 				if (rx_fifo_valid = '1') then
 					rx_fifo_read 	<= '0';
-					RX_CHAR_O 		<= rx_fifo_dout;
+					RX_CHAR_O 		<= rx_fifo_dout(DATA_BITS-1 downto 0);
 					out_state 		<= S_OUT_PUT;
 				end if;
 				
@@ -309,7 +309,7 @@ end process output;
 receive : process(CLK_I)	-- Put chars into RX FIFO
 begin
 	if rising_edge(CLK_I) then
-		if (RESET_I = '1') then
+		if (RST_I = '1') then
 			rx_state		<= S_RX_IDLE;
 			rx_fifo_din 	<= (others => '0');
 			rx_fifo_write	<= '0';

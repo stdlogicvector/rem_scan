@@ -5,35 +5,36 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity pattern is
 	Port (
-		CLK_I			: in	STD_LOGIC;
-		RST_I			: in	STD_LOGIC;
+		CLK_I		: in	STD_LOGIC;
+		RST_I		: in	STD_LOGIC;
 		
 		START_I		: in	STD_LOGIC;
 		ABORT_I		: in	STD_LOGIC;
 		BUSY_O		: out	STD_LOGIC := '0';
 		
-		OFFSET_X_I	: in STD_LOGIC_VECTOR (15 downto 0);
-		OFFSET_Y_I	: in STD_LOGIC_VECTOR (15 downto 0);
+		OFFSET_X_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
+		OFFSET_Y_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 		
-		STEPS_X_I	: in STD_LOGIC_VECTOR (15 downto 0);
-		STEPS_Y_I	: in STD_LOGIC_VECTOR (15 downto 0);
+		STEPS_X_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
+		STEPS_Y_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 		
-		DELTA_X_I	: in STD_LOGIC_VECTOR (15 downto 0);
-		DELTA_Y_I	: in STD_LOGIC_VECTOR (15 downto 0);
+		DELTA_X_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
+		DELTA_Y_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 	
-		INI_DELAY_I	: in STD_LOGIC_VECTOR (15 downto 0);
-		ROW_DELAY_I	: in STD_LOGIC_VECTOR (15 downto 0);
-		COL_DELAY_I	: in STD_LOGIC_VECTOR (15 downto 0);
+		INI_DELAY_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
+		ROW_DELAY_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
+		COL_DELAY_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 			
-		DV_O			: out	STD_LOGIC := '0';
+		DV_O		: out	STD_LOGIC := '0';
 		X_O			: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 		Y_O			: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+		MOVED_I		: in	STD_LOGIC;
 		
-		SAMPLE_O		: out	STD_LOGIC := '0';
+		SAMPLE_O	: out	STD_LOGIC := '0';
 		SAMPLED_I	: in	STD_LOGIC;
 		
-		ROW_O			: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
-		COL_O			: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0')
+		ROW_O		: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+		COL_O		: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0')
 	);
 end pattern;
 
@@ -49,17 +50,19 @@ type state_t is (
 	S_ROW_DELAY,
 	S_SAMPLE,
 	S_WAIT_FOR_SAMPLE,
+	S_WAIT_FOR_MOVE,
 	S_ABORT
 );
 
 signal state	: state_t := S_IDLE;
+signal nstate	: state_t := S_IDLE;
 
 signal x,y		: signed(15 downto 0) := (others => '0');
 signal dx,dy	: signed(15 downto 0) := (others => '0');
 signal ox,oy	: signed(15 downto 0) := (others => '0');
 
 signal sx,sy	: std_logic_vector(15 downto 0) := (others => '0');
-signal row,col : std_logic_vector(15 downto 0) := (others => '0');
+signal row,col	: std_logic_vector(15 downto 0) := (others => '0');
 
 signal timer	: std_logic_vector(15 downto 0) := (others => '0');
 
@@ -116,7 +119,8 @@ begin
 				
 				timer <= (others => '0');
 				
-				state <= S_INI_DELAY;
+				state	<= S_WAIT_FOR_MOVE;
+				nstate	<= S_INI_DELAY;
 			
 			when S_INI_DELAY =>
 				if (timer >= INI_DELAY_I) 
@@ -132,12 +136,17 @@ begin
 				SAMPLE_O	<= '1';
 				ROW_O		<= row;
 				COL_O		<= col;
-				state 	<= S_WAIT_FOR_SAMPLE;
+				state 		<= S_WAIT_FOR_SAMPLE;
 					
 			when S_WAIT_FOR_SAMPLE =>
-				if (SAMPLED_I = '1')
-				then
+--				if (SAMPLED_I = '1')
+--				then
 					state <= S_ROW;
+--				end if;
+					
+			when S_WAIT_FOR_MOVE =>
+				if (MOVED_I = '1') then
+					state <= nstate;
 				end if;
 					
 			when S_ROW =>
@@ -146,11 +155,12 @@ begin
 					state <= S_COL;
 				else
 					x		<= x + dx;
-					row	<= row + '1';
+					row		<= row + '1';
 					
 					DV_O	<= '1';
 					
-					state	<= S_ROW_DELAY;
+					state	<= S_WAIT_FOR_MOVE;
+					nstate	<= S_ROW_DELAY;
 				end if;
 				
 			when S_ROW_DELAY =>
@@ -168,17 +178,19 @@ begin
 					
 					DV_O	<= '1';
 				
-					state <= S_IDLE;
+					state	<= S_WAIT_FOR_MOVE;
+					nstate	<= S_IDLE;
 				else
 					x		<= ox;
-					row	<= (others => '0');
+					row		<= (others => '0');
 					
 					y		<= y + dy;
-					col	<= col + '1';
+					col		<= col + '1';
 					
 					DV_O	<= '1';
 					
-					state	<= S_COL_DELAY;
+					state	<= S_WAIT_FOR_MOVE;
+					nstate	<= S_COL_DELAY;
 				end if;
 				
 			when S_COL_DELAY =>
@@ -194,7 +206,8 @@ begin
 					
 				DV_O	<= '1';
 				
-				state <= S_IDLE;
+				state	<= S_WAIT_FOR_MOVE;
+				nstate	<= S_IDLE;
 				
 			end case;
 		end if;

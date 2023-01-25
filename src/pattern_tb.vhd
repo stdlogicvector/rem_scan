@@ -40,7 +40,8 @@ BEGIN
 		CLK_I 		=> clk100,
 		RST_I 		=> reset,
 		
-		SCAN_I 		=> pat_scan,
+		START_I 	=> pat_scan,
+		ABORT_I		=> '0',
 		BUSY_O 		=> pat_busy,
 		
 		OFFSET_X_I	=> pat_offset_x,
@@ -54,14 +55,14 @@ BEGIN
 		ROW_DELAY_I	=> pat_row_dly,
 		COL_DELAY_I	=> pat_col_dly,
 		
-		DV_O			=> pat_dv,
+		DV_O		=> pat_dv,
 		X_O			=> pat_x,
 		Y_O			=> pat_y,
 		
-		SAMPLE_O		=> pat_sample,
+		SAMPLE_O	=> pat_sample,
 		SAMPLED_I	=> adc_sampled,
-		ROW_O			=> pat_row,
-		COL_O			=> pat_col
+		ROW_O		=> pat_row,
+		COL_O		=> pat_col
 	);
 
    clk : process

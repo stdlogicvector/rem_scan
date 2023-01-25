@@ -6,10 +6,10 @@ use work.util.all;
 entity uart_cmd_decoder is
 	generic (
 		DATA_BITS		: integer	:= 8;
-		MAX_ARGS			: integer	:= 10
+		MAX_ARGS		: integer	:= 10
 	);
 	port (
-		CLK_I				: in	std_logic;
+		CLK_I			: in	std_logic;
 		RESET_I			: in	std_logic;
 	
 		-- Control Connections
@@ -17,7 +17,8 @@ entity uart_cmd_decoder is
 		
 		NEW_CMD_I		: in	std_logic := '0';
 		CMD_ACK_O 		: out	std_logic := '0';
-		CMD_ID_I			: in	std_logic_vector(DATA_BITS-1 downto 0);
+		CMD_NACK_O		: out	std_logic := '0';
+		CMD_ID_I		: in	std_logic_vector(DATA_BITS-1 downto 0);
 		CMD_ARGS_I		: in	std_logic_vector((MAX_ARGS*DATA_BITS)-1 downto 0);
 		
 		NEW_ACK_O		: out	std_logic := '0';
@@ -49,17 +50,17 @@ constant ARG_NR_WIDTH	: integer := clogb2(MAX_ARGS);
 
 -- Command IDs
 
-constant READ_REG			: character := 'R';
+constant READ_REG		: character := 'R';
 constant WRITE_REG		: character := 'W';
 constant START_SCAN		: character := 'S';
 constant ABORT_SCAN		: character := 'X';
 
 --------------------------------------------------------------------------------
 
-constant id_reg_read		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(READ_REG);
+constant id_reg_read	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(READ_REG);
 constant id_reg_write	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(WRITE_REG);
-constant id_start_scan	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START_SCAN);
-constant id_abort_scan	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ABORT_SCAN);
+constant id_scan_start	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START_SCAN);
+constant id_scan_abort	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ABORT_SCAN);
 
 -- Control Signals
 
@@ -76,7 +77,7 @@ S_WAIT_FOR_REPLY
 
 signal state : state_t := S_IDLE;
 
-signal cmd_id			: std_logic_vector(DATA_BITS-1 downto 0) := (others => '0');
+signal cmd_id		: std_logic_vector(DATA_BITS-1 downto 0) := (others => '0');
 signal cmd_args		: std_logic_bus(MAX_ARGS-1 downto 0) := (others => (others => '0'));
 signal rpl_args		: std_logic_bus(MAX_ARGS-1 downto 0) := (others => (others => '0'));
 
@@ -90,18 +91,15 @@ control : process(CLK_I)
 begin
 	if rising_edge(CLK_I) then
 		if (RESET_I = '1') then
-			if (USE_INIT = TRUE) then
-				state 		 <= S_CMD;
-				cmd_id		 <= x"00";
-			else
-				state 		 <= S_IDLE;
-				cmd_id		 <= (others => '0');
-			end if;
+			state 		 <= S_IDLE;
+			cmd_id		 <= (others => '0');
 			
-			rpl_args		 <= (others => (others => '0'));
+			rpl_args	 <= (others => (others => '0'));
 			REPLY_ID_O	 <= (others => '0');
 		else
 			CMD_ACK_O	 	<= '0';
+			CMD_NACK_O		<= '0';
+			
 			NEW_ACK_O	 	<= '0';
 			NEW_NACK_O	 	<= '0';
 			NEW_REPLY_O	 	<= '0';
@@ -123,10 +121,11 @@ begin
 						cmd_args(i) <= 	CMD_ARGS_I((8*(i+1)-1) downto (8*i));
 					end loop;
 
-					if (SCAN_BUSY_I = '0' OR CMD_ID_I = id_abort_scan) then	-- Ignore Commands if Scan is running
+					if (SCAN_BUSY_I = '0' OR CMD_ID_I = id_scan_abort) then	-- Ignore Commands if Scan is running
 						state <= S_CMD;
 					else
-						state	<= S_IDLE;
+						CMD_NACK_O <= '1';
+						state <= S_IDLE;
 					end if;
 				end if;
 				
@@ -171,7 +170,7 @@ begin
 				case cmd_id is
 
 				--when id_scan_start =>
-				-- Don't wait for Scan to start, send reply immediately
+				-- Don't wait for Scan to end, send reply immediately
 
 				when id_scan_abort =>
 					if (SCAN_BUSY_I = '0') then
@@ -192,7 +191,7 @@ begin
 					rpl_args(1) 	<= REG_DATA_I( 7 downto 0);
 					REPLY_ARGN_O	<= int2vec(2, ARG_NR_WIDTH);
 			 
-				when id_reg_write		|
+				when id_reg_write	|
 					  id_scan_start	|
 					  id_scan_abort	=>
 					NEW_ACK_O	<= '1';				

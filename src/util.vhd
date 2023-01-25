@@ -9,10 +9,10 @@ package Util is
 	-- attributes
 	---------------------------------------------------------------------------------------------
 
-	attribute clock_signal		: string;	-- " {yes | no}";
-	attribute ram_style			: string;	-- " {block | distributed | registers}";
-	attribute rom_style			: string;	-- " {block | distributed | registers}";
-	attribute ASYNC_REG 			: string;	-- " {TRUE  | FALSE}";
+--	attribute clock_signal		: string;	-- " {yes | no}";
+--	attribute ram_style			: string;	-- " {block | distributed | registers}";
+--	attribute rom_style			: string;	-- " {block | distributed | registers}";
+--	attribute ASYNC_REG 		: string;	-- " {TRUE  | FALSE}";
 	
 	---------------------------------------------------------------------------------------------
 	-- constants
@@ -22,7 +22,7 @@ package Util is
 	shared variable RAND_SEED2		: integer := 345;
 	
 	constant RISING					: std_logic_vector(1 downto 0) := "01";
-	constant FALLING					: std_logic_vector(1 downto 0) := "10";
+	constant FALLING				: std_logic_vector(1 downto 0) := "10";
 	
 	---------------------------------------------------------------------------------------------
 	-- types
@@ -30,6 +30,7 @@ package Util is
 	
 	type integer_vector is array(natural range <>) of integer;
 	type boolean_vector is array(natural range <>) of boolean;
+	type real_vector    is array(natural range <>) of real;
 	--type vectorarray_t is array(natural range <>) of std_logic_vector;
 		
 	type array32_t	is array(natural range <>) of std_logic_vector(31 downto 0);
@@ -86,6 +87,9 @@ package Util is
 	
 	function ip2vec(f0, f1, f2, f3 : integer range 0 to 255) return std_logic_vector;
 	function mac2vec(m0, m1, m2, m3, m4, m5 : std_logic_vector(7 downto 0)) return std_logic_vector;
+	
+	function to_hstring(v : std_logic_vector) return string;
+	function to_hchar(i : unsigned) return character;
 
 	---------------------------------------------------------------------------------------------
 	-- Math Helpers
@@ -94,6 +98,7 @@ package Util is
 	pure function clogb2 (depth : natural) return integer;
 	pure function bits(n : integer) return integer;
 	pure function ispowerof2(n : integer) return boolean;
+	pure function div_ceil(a : natural; b : positive) return natural;
 
 	pure function sum(v : integer_vector) return integer;
 	pure function sum(v : integer_vector; upto: integer) return integer;
@@ -491,6 +496,34 @@ begin
 	return vec;
 end function mac2vec;
 
+function to_hstring(v : std_logic_vector) return string is
+	variable value	: std_logic_vector(4*div_ceil(v'length, 4) - 1 downto 0);
+	variable digit	: std_logic_vector(3 downto 0);
+	variable result	: string(1 to 4) := "    ";--(1 to div_ceil(v'length, 4));
+	variable j		: natural;
+begin
+	value := zero_resize(v, value'length);
+	j	  := 0;
+	
+	for i in result'reverse_range loop
+		digit       := value((j * 4) + 3 downto (j * 4));
+		result(i)   := to_hchar(unsigned(digit));
+		j           := j + 1;
+	end loop;
+	
+	return result;
+end to_hstring;
+
+function to_hchar(i : unsigned) return character is
+	constant hex : string(1 to 16) := "0123456789ABCDEF";
+begin
+	if (i < 16) then
+		return hex(to_integer(i) + 1);
+	else
+		return 'X';
+	end if;
+end to_hchar;
+
 function real2fixed(r : real; l, u : integer) return std_logic_vector is
 	variable i : integer;
 begin
@@ -703,6 +736,11 @@ begin
 		return false;
 	end if;
 end ispowerof2;
+
+pure function div_ceil(a : natural; b : positive) return natural is
+begin
+	return (a + (b - 1)) / b;
+end div_ceil;
 
 pure function sum(v : integer_vector) return integer is
 variable s : integer := 0;
