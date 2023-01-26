@@ -35,13 +35,13 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 9	=> x"0000",		-- OFFSET Y
 10	=> x"0100",		-- STEPS X
 11	=> x"0100",		-- STEPS Y
-12	=> x"0100",		-- DELTA X
-13	=> x"0100",		-- DELTA Y
+12	=> x"00FF",		-- DELTA X
+13	=> x"00FF",		-- DELTA Y
 
-16	=> x"0002",		-- CTRL DELAY (2560ns steps) 0us-167.77216ms
-17	=> x"0064",		-- INI DELAY  (  10ns steps) 0us-655.36us
-18	=> x"0064",		-- COL DELAY  (  10ns steps) 0us-655.36us
-19	=> x"0064",		-- ROW DELAY  (  10ns steps) 0us-655.36us
+16	=> x"030E",		-- CTRL DELAY (2560ns steps) 0us-167.77216ms 	0x030E =   2ms
+17	=> x"2710",		-- INI DELAY  (  10ns steps) 0us-655.36us		0x2710 = 100us
+18	=> x"05DC",		-- COL DELAY  (  10ns steps) 0us-655.36us		0x05DC =  15us
+19	=> x"05DC",		-- ROW DELAY  (  10ns steps) 0us-655.36us		0x05DC =  15us
 
 20 => x"4000",		-- Transform Matrix C00
 21 => x"0000",		-- Transform Matrix C01

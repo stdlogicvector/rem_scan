@@ -1,0 +1,8 @@
+INTSTYLE=ise
+INFILE=/mnt/vhdl/rem_scan/toplevel.ncd
+OUTFILE=/mnt/vhdl/rem_scan/toplevel.bit
+FAMILY=Spartan6
+PART=xc6slx16-2ftg256
+WORKINGDIR=/mnt/vhdl/rem_scan
+LICENSE=WebPack
+USER_INFO=211585858_0_0_079

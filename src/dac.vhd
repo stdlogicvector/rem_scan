@@ -49,10 +49,14 @@ constant ORS_REG : std_logic_vector(2 downto 0) := b"001";	-- Output Range Selec
 constant PWR_REG : std_logic_vector(2 downto 0) := b"010";	-- Power Control
 constant CTL_REG : std_logic_vector(2 downto 0) := b"011";	-- Control
 
-constant CH_0	: std_logic_vector(2 downto 0) := b"000";
-constant CH_1	: std_logic_vector(2 downto 0) := b"001";
-constant CH_2	: std_logic_vector(2 downto 0) := b"010";
-constant CH_3	: std_logic_vector(2 downto 0) := b"011";
+type ch_id_t	is array(0 to 3) of std_logic_vector(2 downto 0);
+constant CH2_ID	: ch_id_t := (b"000", b"010", b"000", b"010");
+constant CH4_ID : ch_id_t := (b"000", b"001", b"010", b"011");
+
+--constant CH_0	: std_logic_vector(2 downto 0) := b"000";
+--constant CH_1	: std_logic_vector(2 downto 0) := b"001";
+--constant CH_2	: std_logic_vector(2 downto 0) := b"010";
+--constant CH_3	: std_logic_vector(2 downto 0) := b"011";
 constant CH_ALL	: std_logic_vector(2 downto 0) := b"100";
 
 constant CTL_CFG	: std_logic_vector(2 downto 0) := b"001";
@@ -207,7 +211,12 @@ begin
 			when SEND_CH =>
 				if (busy_reg = '0')
 				then
-					CMD_O  <= W & DAC_REG & std_logic_vector(to_unsigned(ch, 3)) & ch_reg(ch);
+					if (CHANNELS = 2) then
+						CMD_O <= W & DAC_REG & CH2_ID(ch) & ch_reg(ch);
+					elsif (CHANNELS = 4) then
+						CMD_O  <= W & DAC_REG & std_logic_vector(to_unsigned(ch, 3)) & ch_reg(ch);
+					end if;
+					
 					SEND_O <= '1';
 				else
 					state <= TRANSMIT_CH;

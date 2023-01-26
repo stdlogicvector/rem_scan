@@ -4,14 +4,17 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity control is
 	Port (
-		CLK_I				: in  STD_LOGIC;
-		RST_I				: in  STD_LOGIC;
+		CLK_I			: in  STD_LOGIC;
+		RST_I			: in  STD_LOGIC;
 		
 		CONTROL_O		: out STD_LOGIC := '0';
 		
 		SCAN_START_I	: in  STD_LOGIC;
 		SCAN_ABORT_I	: in  STD_LOGIC;
 		SCAN_BUSY_I		: in  STD_LOGIC;
+		
+		MUX_SELECT_O	: out	std_logic := '0';
+		MUX_SELECT_I	: in	std_logic;
 		
 		SCAN_START_O	: out	STD_LOGIC := '0';
 		SCAN_ABORT_O	: out	STD_LOGIC := '0';
@@ -25,9 +28,11 @@ architecture Behavioral of control is
 
 type state_t is (
 	S_IDLE,
+	S_GET_MUX,
 	S_DELAY,
 	S_START,
-	S_SCAN
+	S_SCAN,
+	S_LEAVE_MUX
 );
 
 signal state	: state_t := S_IDLE;
@@ -56,12 +61,18 @@ begin
 					CONTROL_O	<= '1';
 					SCAN_BUSY_O <= '1';
 					timer	<= (others => '0');
-					state	<= S_DELAY;
+					state	<= S_GET_MUX;
 				else
 					SCAN_BUSY_O <= '0';
 					CONTROL_O	<= '0';
 				end if;
-				
+			
+			when S_GET_MUX =>
+				MUX_SELECT_O <= '1';
+				if (MUX_SELECT_I = '1') then
+					state <= S_DELAY;
+				end if;
+			
 			when S_DELAY =>
 				if (timer(23 downto 8) >= CTRL_DELAY_I)
 				then
@@ -84,6 +95,12 @@ begin
 			
 				if (SCAN_BUSY_I = '0')
 				then
+					state <= S_LEAVE_MUX;
+				end if;
+				
+			when S_LEAVE_MUX =>
+				MUX_SELECT_O <= '0';
+				if (MUX_SELECT_I = '0') then
 					state <= S_IDLE;
 				end if;
 				

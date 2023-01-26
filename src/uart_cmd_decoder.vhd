@@ -40,7 +40,6 @@ entity uart_cmd_decoder is
 		SCAN_START_O	: out	std_logic := '0';
 		SCAN_ABORT_O	: out	std_logic := '0';
 		SCAN_BUSY_I		: in	std_logic := '0'
-		
 	);
 end uart_cmd_decoder;
 
