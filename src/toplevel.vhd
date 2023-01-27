@@ -204,7 +204,9 @@ port map (
 	GET_CHAR_I		=> uart_get,
 	GET_ACK_O		=> uart_get_ack,
 	RX_CHAR_O		=> uart_get_char,
-	RX_EMPTY_O		=> uart_get_empty
+	RX_EMPTY_O		=> uart_get_empty,
+
+	DBG_O			=> DBG_O
 );
 
 uart_mux : entity work.uart_mux
@@ -350,13 +352,13 @@ port map (
 	CTRL_DELAY_I	=> reg(16)
 );
 
-DBG_O <= (
-	0	=> pat_sample,
-	1	=> video_sent,
-	2	=> mux_select,
-	3	=> mux_selected,
-	others => '0'
-);
+--DBG_O <= (
+--	0	=> pat_sample,
+--	1	=> video_sent,
+--	2	=> mux_select,
+--	3	=> mux_selected,
+--	others => '0'
+--);
 
 pattern : entity work.pattern 
 port map (

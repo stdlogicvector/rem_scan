@@ -236,8 +236,7 @@ rx_fsm : entity work.uart_fast_rx
 		DATA_BITS	=> DATA_BITS,
 		PARITY_BIT	=> PARITY_BIT,
 		STOP_BITS	=> STOP_BITS,
-		START_BIT	=> START_BIT,
-		ALIGNMENT	=> FALSE
+		START_BIT	=> START_BIT
 	)
 	PORT MAP (
 		RST_I		=> RST_I,
