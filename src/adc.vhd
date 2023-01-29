@@ -32,7 +32,7 @@ signal state 	: state_t := IDLE;
 
 signal sck_en 	: STD_LOGIC := '0';
 
-constant timedout : integer := 255;
+constant timedout : integer := 127;
 signal timeout	  : integer range 0 to timedout := 0;
 
 begin
@@ -85,12 +85,13 @@ begin
 				if (SD0_I = '1') AND (SD1_I= '1') then
 					CONV_O  <= '1';
 					
-					if (data_bit = 4) then
+					if (data_bit = 5) then
 						state	<= CONVERSION;
 					else
 						data_bit <= data_bit + 1;
 					end if;
 				elsif timeout = timedout then
+					DV_O  <= '1';	-- For Testing
 					state <= IDLE;
 				end if;
 				
@@ -98,6 +99,7 @@ begin
 				if (SD0_I = '0') AND (SD1_I = '0') then
 					state <= LOAD_DATA;
 				elsif timeout = timedout then
+					DV_O  <= '1';	-- For Testing
 					state <= IDLE;
 				end if;
 			

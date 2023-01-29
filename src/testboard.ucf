@@ -20,8 +20,8 @@ NET "DAC_nCLR_O"				LOC = A10	| IOSTANDARD = LVCMOS33;
 # I/O's for ADC
 NET "ADC_CNV_O"					LOC = P1	| IOSTANDARD = LVCMOS33;
 NET "ADC_SCK_O"					LOC = M1	| IOSTANDARD = LVCMOS33;
-NET "ADC_SD0_I"					LOC = N1	| IOSTANDARD = LVCMOS33 | PULLUP;		# Goes low to signal conversion finished
-NET "ADC_SD1_I"					LOC = R1	| IOSTANDARD = LVCMOS33 | PULLUP;		# Goes low to signal conversion finished
+NET "ADC_SD0_I"					LOC = N1	| IOSTANDARD = LVCMOS33;		# Goes low to signal conversion finished
+NET "ADC_SD1_I"					LOC = R1	| IOSTANDARD = LVCMOS33;		# Goes low to signal conversion finished
 
 NET "UART_TX_O"               	LOC = F15	| IOSTANDARD = LVCMOS33;
 NET "UART_RX_I"              	LOC = D16	| IOSTANDARD = LVCMOS33;

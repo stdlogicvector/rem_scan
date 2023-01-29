@@ -504,7 +504,7 @@ port map (
 	SAMPLE_I	=> adc_sample,
 	
 	CONV_O		=> adc_conv,
-	SCK_O		=> adc_sck,
+	SCK_O		=> ADC_SCK_O,
 	SD0_I		=> ADC_SD0_I,
 	SD1_I		=> ADC_SD1_I,
 	
@@ -514,12 +514,11 @@ port map (
 );
 
 ADC_CNV_O <= adc_conv;
-ADC_SCK_O <= adc_sck;
 
 DBG_O <= (
 	0	=> adc_sample,
 	1	=> adc_conv,
-	2	=> ADC_SD0_I,
+	2	=> ADC_SD0_I,--adc_ch_dv,
 	3	=> ADC_SD1_I,
 	others => '0'
 );
