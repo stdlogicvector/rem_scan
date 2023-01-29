@@ -11,8 +11,7 @@ entity toplevel is
 		UART_FLOW_CTRL		: boolean := false;
 		UART_CMD_BITS		: integer := 8;
 		UART_CMD_MAX_ARGS	: integer := 4;
-		NR_OF_REGS			: integer := 32;
-		TEST_IMAGE			: boolean := true
+		NR_OF_REGS			: integer := 32
 	);
 	Port (
 		CLK50_I		: in	STD_LOGIC;
@@ -106,8 +105,6 @@ signal scan_busy		: std_logic;
 signal mux_select		: std_logic;
 signal mux_selected		: std_logic;
 
-signal video_sent		: std_logic;
-
 -- REGISTERS
 signal reg_write		: std_logic := '0';
 signal reg_addr			: std_logic_vector( 7 downto 0) := (others => '0');
@@ -133,7 +130,7 @@ signal trn_dv			: std_logic;
 signal trn_x			: std_logic_vector(15 downto 0);
 signal trn_y			: std_logic_vector(15 downto 0);
 
--- DAC&ADC
+-- DAC
 signal dac_raw_dv		: std_logic;
 signal dac_raw			: std_logic_vector(23 downto 0);
 signal dac_done			: std_logic;
@@ -142,9 +139,27 @@ signal spi_send			: std_logic;
 signal spi_busy			: std_logic;
 signal spi_data_tx		: std_logic_vector(23 downto 0);
 
-signal adc_dv			: std_logic;
+-- ADC
+signal adc_sample		: std_logic;
+signal adc_conv			: std_logic;
+signal adc_sck			: std_logic;
+
+signal adc_ch_dv		: std_logic;
 signal adc_ch0			: std_logic_vector(15 downto 0);
 signal adc_ch1			: std_logic_vector(15 downto 0);
+
+signal adc_dv			: std_logic;
+signal adc_data			: std_logic_vector(15 downto 0);
+
+-- TESTIMG
+signal tst_dv			: std_logic;
+signal tst_data			: std_logic_vector(15 downto 0);
+signal tst_sample		: std_logic;
+
+-- VIDEO
+signal vid_dv			: std_logic;
+signal vid_data			: std_logic_vector(15 downto 0);
+signal vid_sent			: std_logic;
 
 signal counter			: std_logic_vector(10 downto 0) := (others => '0');
 
@@ -353,14 +368,6 @@ port map (
 	CTRL_DELAY_I	=> reg(16)
 );
 
-DBG_O <= (
-	0	=> pat_sample,
-	1	=> video_sent,
-	2	=> mux_select,
-	3	=> mux_selected,
-	others => '0'
-);
-
 pattern : entity work.pattern 
 port map (
 	CLK_I 		=> clk100,
@@ -387,11 +394,10 @@ port map (
 	MOVED_I		=> dac_done,
 	
 	SAMPLE_O	=> pat_sample,
-	SAMPLED_I	=> video_sent,
+	SAMPLED_I	=> vid_sent,
 	ROW_O		=> pat_row,
 	COL_O		=> pat_col
 );
-
 
 transform : entity work.transform
 port map (
@@ -472,42 +478,84 @@ port map (
 --TODO: Averaging
 -- (pat_sample triggers statemachine that generates multiple samples and averages them)
 
-test : if TEST_IMAGE = TRUE generate
+testimg : entity work.testimg
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> reset,
 
-process(clk100)
-begin
-	if rising_edge(clk100) then
-		if (pat_sample = '1') then
-			adc_ch0 <= pat_col(7 downto 0) & pat_row(7 downto 0);
-			adc_dv <= '1';
-		else
-			adc_dv <= '0';
-		end if;
-	end if;
-end process;
+	SAMPLE_I	=> tst_sample,
+	MODE_I		=> reg(1)(3 downto 0),
 
-end generate;
+	ROW_I		=> pat_row,
+	COL_I		=> pat_col,
 
-no_test : if TEST_IMAGE = FALSE generate
+	X_I			=> trn_x,
+	Y_I			=> trn_y,
+
+	DV_O		=> tst_dv,
+	DATA_O		=> tst_data
+);
 
 adc : entity work.adc
 port map (
 	CLK_I		=> clk100,
 	RST_I		=> reset,
 	
-	SAMPLE_I	=> pat_sample,
+	SAMPLE_I	=> adc_sample,
 	
-	CONV_O		=> ADC_CNV_O,
-	SCK_O		=> ADC_SCK_O,
+	CONV_O		=> adc_conv,
+	SCK_O		=> adc_sck,
 	SD0_I		=> ADC_SD0_I,
 	SD1_I		=> ADC_SD1_I,
 	
-	DV_O		=> adc_dv,
+	DV_O		=> adc_ch_dv,
 	CH0_O		=> adc_ch0,
 	CH1_O		=> adc_ch1
 );
 
-end generate;
+ADC_CNV_O <= adc_conv;
+ADC_SCK_O <= adc_sck;
+
+DBG_O <= (
+	0	=> adc_sample,
+	1	=> adc_conv,
+	2	=> ADC_SD0_I,
+	3	=> ADC_SD1_I,
+	others => '0'
+);
+
+adc_mux : process(clk100)
+begin
+	if rising_edge(clk100) then
+		adc_dv <= adc_ch_dv;
+
+		if (reg(0)(0) = '0') then
+			adc_data <= adc_ch0;
+		else
+			adc_data <= adc_ch1;
+		end if;
+	end if;
+end process;
+
+video_mux : entity work.video_mux
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> reset,
+
+	CHANNEL_I	=> reg(0)(2),
+
+	SAMPLE_I	=> pat_sample,
+	DV_O		=> vid_dv,
+	DATA_O		=> vid_data,
+
+	CH0_SAMPLE_O	=> adc_sample,
+	CH0_DV_I		=> adc_dv,
+	CH0_DATA_I		=> adc_data,
+
+	CH1_SAMPLE_O	=> tst_sample,
+	CH1_DV_I		=> tst_dv,
+	CH1_DATA_I		=> tst_data
+);
 
 --TODO: Video Signal Processing (LUT?, Brightness/Contrast?)
 
@@ -516,14 +564,12 @@ port map (
 	CLK_I 		=> clk100,
 	RST_I 		=> reset,
 		
-	CHANNEL_I	=> reg(0)(0),
 	LOW_RES_I	=> reg(0)(1),
 		
-	DV_I		=> adc_dv & adc_dv,
-	CH0_I 		=> adc_ch0,
-	CH1_I 		=> adc_ch1,
+	DV_I		=> vid_dv,
+	DATA_I 		=> vid_data,
 		
-	SENT_O		=> video_sent,
+	SENT_O		=> vid_sent,
 		
 	PUT_CHAR_O	=> video_put_char,
 	PUT_ACK_I	=> video_put_ack,

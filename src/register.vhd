@@ -28,7 +28,9 @@ constant ADDR_WIDTH : integer := clogb2(NR_OF_REGS) - 1;
 
 signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 0	=> (
-	others => '0'
+	0		=> '0',	-- Channel Select
+	1		=> '1',	-- 8-Bit Mode
+	others	=> '0'
 	),
 
 8	=> x"0000",		-- OFFSET X

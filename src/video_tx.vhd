@@ -8,12 +8,10 @@ entity video_tx is
 		CLK_I 		: in	STD_LOGIC;
 		RST_I 		: in	STD_LOGIC;
 		
-		CHANNEL_I	: in	STD_LOGIC := '0';
 		LOW_RES_I	: in	STD_LOGIC := '0';
 		
-		DV_I		: in	STD_LOGIC_VECTOR( 1 downto 0);
-		CH0_I 		: in	STD_LOGIC_VECTOR(15 downto 0);
-		CH1_I 		: in	STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
+		DV_I		: in	STD_LOGIC;
+		DATA_I 		: in	STD_LOGIC_VECTOR(15 downto 0);
 		
 		SENT_O		: out	STD_LOGIC := '0';
 		
@@ -51,13 +49,9 @@ begin
 			
 			case (state) is
 			when S_IDLE =>
-				if DV_I(0) = '1' AND CHANNEL_I = '0' then
-					data <= CH0_I;
-				elsif DV_I(1) = '1' AND CHANNEL_I = '1' then
-					data <= CH1_I;
-				end if;
+				data <= DATA_I;
 				
-				if DV_I /= "00" then
+				if DV_I = '1' then
 					state <= S_SEND_HI;
 				end if;
 				
