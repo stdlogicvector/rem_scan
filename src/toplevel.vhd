@@ -88,6 +88,7 @@ signal uart_cmd_args	: std_logic_vector((UART_CMD_MAX_ARGS*UART_CMD_BITS)-1 down
 
 signal uart_new_ack		: std_logic;
 signal uart_new_nack	: std_logic;
+signal uart_new_done	: std_logic;
 
 signal uart_new_reply	: std_logic;
 signal uart_reply_ack	: std_logic;
@@ -204,9 +205,7 @@ port map (
 	GET_CHAR_I		=> uart_get,
 	GET_ACK_O		=> uart_get_ack,
 	RX_CHAR_O		=> uart_get_char,
-	RX_EMPTY_O		=> uart_get_empty,
-
-	DBG_O			=> DBG_O
+	RX_EMPTY_O		=> uart_get_empty
 );
 
 uart_mux : entity work.uart_mux
@@ -266,6 +265,7 @@ port map (
 	
 	NEW_ACK_I		=> uart_new_ack,
 	NEW_NACK_I		=> uart_new_nack,
+	NEW_DONE_I		=> uart_new_done,
 	
 	NEW_REPLY_I		=> uart_new_reply,
 	REPLY_ACK_O		=> uart_reply_ack,
@@ -293,6 +293,7 @@ port map (
 	
 	NEW_ACK_O		=> uart_new_ack,
 	NEW_NACK_O		=> uart_new_nack,
+	NEW_DONE_O		=> uart_new_done,
 	
 	NEW_REPLY_O		=> uart_new_reply,
 	REPLY_ACK_I		=> uart_reply_ack,
@@ -352,13 +353,13 @@ port map (
 	CTRL_DELAY_I	=> reg(16)
 );
 
---DBG_O <= (
---	0	=> pat_sample,
---	1	=> video_sent,
---	2	=> mux_select,
---	3	=> mux_selected,
---	others => '0'
---);
+DBG_O <= (
+	0	=> pat_sample,
+	1	=> video_sent,
+	2	=> mux_select,
+	3	=> mux_selected,
+	others => '0'
+);
 
 pattern : entity work.pattern 
 port map (

@@ -23,6 +23,7 @@ entity uart_cmd_decoder is
 		
 		NEW_ACK_O		: out	std_logic := '0';
 		NEW_NACK_O		: out	std_logic := '0';
+		NEW_DONE_O		: out	std_logic := '0';
 		
 		NEW_REPLY_O		: out	std_logic := '0';
 		REPLY_ACK_I		: in	std_logic := '0';
@@ -101,6 +102,7 @@ begin
 			
 			NEW_ACK_O	 	<= '0';
 			NEW_NACK_O	 	<= '0';
+			NEW_DONE_O		<= '0';
 			NEW_REPLY_O	 	<= '0';
 		
 			SCAN_START_O	<= '0';
@@ -185,16 +187,17 @@ begin
 
 				when id_reg_read =>
 					NEW_REPLY_O		<= '1';
-					NEW_ACK_O		<= '1';
 					rpl_args(0) 	<= REG_DATA_I(15 downto 8);
 					rpl_args(1) 	<= REG_DATA_I( 7 downto 0);
 					REPLY_ARGN_O	<= int2vec(2, ARG_NR_WIDTH);
 			 
 				when id_reg_write	|
-					  id_scan_start	|
 					  id_scan_abort	=>
 					NEW_ACK_O	<= '1';				
-										
+									
+				when id_scan_start =>
+					NEW_DONE_O	<= '1';
+
 				when others =>
 					NEW_NACK_O	<= '1';
 				end case;

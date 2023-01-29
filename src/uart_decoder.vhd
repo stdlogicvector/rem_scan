@@ -38,6 +38,7 @@ entity uart_decoder is
 		
 		NEW_ACK_I		: in	std_logic;
 		NEW_NACK_I		: in	std_logic;
+		NEW_DONE_I 		: in	std_logic := '0';
 		
 		NEW_REPLY_I		: in 	std_logic;
 		REPLY_ACK_O		: out	std_logic := '0';
@@ -58,14 +59,16 @@ constant START			: character := '{';
 constant STOP			: character := '}';
 constant ACK			: character := '!';
 constant NACK			: character := '?';
+constant DELIMITER		: character := character'val(10);
 
 ------------------------------------------------
 
 constant esc_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ESC);
-constant start_char	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START);
-constant stop_char	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(STOP);
+constant start_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START);
+constant stop_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(STOP);
 constant ack_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ACK);
-constant nack_char	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(NACK);
+constant nack_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(NACK);
+constant delim_char		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(DELIMITER);
 
 ------------------------------------------------
 
@@ -78,13 +81,13 @@ signal p_state : p_state_t := S_WAIT_FOR_START;
 type h_state_t is (S_WAIT_FOR_CMD, S_WAIT_FOR_REPLY_ACK, S_WAIT_FOR_REPLY_FINISH);
 signal h_state : h_state_t := S_WAIT_FOR_CMD;
 
-type r_state_t is (S_WAIT_FOR_REPLY, S_SEND_ACK, S_SEND_ID, S_SEND_ARGS, S_SEND_STOP, S_SEND_END_ACK, S_WAIT_FOR_END_ACK);
+type r_state_t is (S_WAIT_FOR_REPLY, S_SEND_ID, S_SEND_ARGS, S_SEND_STOP, S_SEND_DELIMITER, S_WAIT_FOR_DELIMITER);
 signal r_state : r_state_t := S_WAIT_FOR_REPLY;
 
 signal rx_char			: std_logic_vector(DATA_BITS-1 downto 0);
-signal new_char		: std_logic := '0';
+signal new_char			: std_logic := '0';
 signal new_cmd			: std_logic := '0';
-signal handler_busy	: std_logic := '0';
+signal handler_busy		: std_logic := '0';
 signal reply_sent		: std_logic	:= '0';
 
 signal cmd_active		: std_logic := '0';
@@ -99,13 +102,11 @@ signal rx_arg			: std_logic_vector(ARG_NR_WIDTH-1 downto 0) := (others => '0');
 signal tx_id			: std_logic_vector(DATA_BITS-1 downto 0) := (others => '0');
 signal tx_args			: std_logic_bus(MAX_ARGS-1 downto 0) := (others => (others => '0'));
 signal tx_arg			: std_logic_vector(ARG_NR_WIDTH-1 downto 0) := (others => '0');
-signal tx_arg_n		: std_logic_vector(ARG_NR_WIDTH-1 downto 0) := (others => '0');
+signal tx_arg_n			: std_logic_vector(ARG_NR_WIDTH-1 downto 0) := (others => '0');
 
 -- ASCII to Hex Conversion Signals
 signal rx_nib			: integer range 0 to 1	:= 0;	-- Nibble Count
 signal tx_nib			: integer range 0 to 1	:= 0;	-- Nibble Count
-
-signal ack_reply		: std_logic := '0';
 
 begin
 
@@ -277,7 +278,7 @@ begin
 					TX_BUSY_O 	<= '1';
 					TX_CHAR_O	<= nack_char;
 					PUT_CHAR_O	<= '1';
-					r_state		<= S_SEND_ACK;
+					r_state		<= S_SEND_DELIMITER;
 				
 				elsif (NEW_REPLY_I = '1') then
 					TX_BUSY_O 	<= '1';
@@ -294,28 +295,30 @@ begin
 					tx_arg	<= (others => '0');
 					tx_nib	<= 1;
 					r_state	<= S_SEND_ID;
-					
-					ack_reply <= NEW_ACK_I;
 				
 				elsif (NEW_ACK_I = '1') then
 					TX_BUSY_O 	<= '1';
 					TX_CHAR_O 	<= ack_char;
 					PUT_CHAR_O	<= '1';
-					r_state		<= S_SEND_ACK;
+					r_state		<= S_SEND_DELIMITER;
+				
+				elsif (NEW_DONE_I = '1') then
+					REPLY_ACK_O	<= '1';
+					reply_sent	<= '1';
 				end if;
 					
-			when S_SEND_ACK =>
-				if (PUT_ACK_I = '1') then
-					REPLY_ACK_O		<= '1';
-					reply_sent		<= '1';
-					r_state			<= S_WAIT_FOR_REPLY;
-				end if;
+--			when S_SEND_ACK =>
+--				if (PUT_ACK_I = '1') then
+--					REPLY_ACK_O		<= '1';
+--					reply_sent		<= '1';
+--					r_state			<= S_SEND_DELIMITER;
+--				end if;
 					
 			when S_SEND_ID =>
 				if (PUT_ACK_I = '1') then
-					TX_CHAR_O  <= tx_id;
-					PUT_CHAR_O <= '1';
-					r_state	  <= S_SEND_ARGS;
+					TX_CHAR_O	<= tx_id;
+					PUT_CHAR_O	<= '1';
+					r_state		<= S_SEND_ARGS;
 				end if;
 				
 			when S_SEND_ARGS =>
@@ -326,13 +329,13 @@ begin
 							
 							if tx_args(vec2int(tx_arg))(7 downto 4) < x"A" then							-- 0..9
 								TX_CHAR_O <= "0011" & tx_args(vec2int(tx_arg))(7 downto 4);
-							else																							-- A..F
+							else																		-- A..F
 								TX_CHAR_O <= "0100" & (tx_args(vec2int(tx_arg))(7 downto 4) - x"9");
 							end if;
 						else									-- Lo Nibble
 							if tx_args(vec2int(tx_arg))(3 downto 0) < x"A" then							-- 0..9
 								TX_CHAR_O <= "0011" & tx_args(vec2int(tx_arg))(3 downto 0);
-							else																							-- A..F
+							else																		-- A..F
 								TX_CHAR_O <= "0100" & (tx_args(vec2int(tx_arg))(3 downto 0) - x"9");
 							end if;
 					
@@ -350,21 +353,17 @@ begin
 				if (PUT_ACK_I = '1') then
 					TX_CHAR_O   <= stop_char;
 					PUT_CHAR_O  <= '1';
-					if (ack_reply = '1') then
-						r_state <= S_SEND_END_ACK;
-					else
-						r_state <= S_WAIT_FOR_END_ACK;
-					end if;
+					r_state		<= S_SEND_DELIMITER;
 				end if;
 				
-			when S_SEND_END_ACK =>
+			when S_SEND_DELIMITER =>
 				if (PUT_ACK_I = '1') then
-					TX_CHAR_O 	<= ack_char;
+					TX_CHAR_O 	<= delim_char;
 					PUT_CHAR_O	<= '1';
-					r_state		<= S_WAIT_FOR_END_ACK;
+					r_state		<= S_WAIT_FOR_DELIMITER;
 				end if;
 				
-			when S_WAIT_FOR_END_ACK =>
+			when S_WAIT_FOR_DELIMITER =>
 				if (PUT_ACK_I = '1') then
 					REPLY_ACK_O	<= '1';
 					reply_sent  <= '1';

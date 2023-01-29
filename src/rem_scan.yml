@@ -1,0 +1,103 @@
+toplevel: toplevel
+name: rem_scan
+files: 
+  - name: "adc.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "control.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "dac.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "pattern.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "pattern_tb.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "register.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "spi.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "toplevel.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "toplevel_tb.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "transform.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart_cmd_decoder.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart_decoder.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart_fast_rx.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart_fast_tx.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "util.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "uart_mux.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+  - name: "video_tx.vhd"
+    file_type: "vhdlSource-2008"
+    is_include_file: false
+    include_path: ""
+    logical_name: ""
+tool_options: 
+  ghdl: 
+    installation_path: ""
+    waveform: vcd
+    analyze_options: 
+      - "--ieee=synopsys"
+    run_options: 
+      - ""
+    linter_options: 
+      - ""

@@ -139,10 +139,10 @@ begin
 				state 		<= S_WAIT_FOR_SAMPLE;
 					
 			when S_WAIT_FOR_SAMPLE =>
---				if (SAMPLED_I = '1')
---				then
+				if (SAMPLED_I = '1')
+				then
 					state <= S_ROW;
---				end if;
+				end if;
 					
 			when S_WAIT_FOR_MOVE =>
 				if (MOVED_I = '1') then
@@ -150,27 +150,39 @@ begin
 				end if;
 					
 			when S_ROW =>
+				x		<= x + dx;
+				row		<= row + '1';
+				
+				DV_O	<= '1';
+				
+				state	<= S_WAIT_FOR_MOVE;
+				nstate	<= S_ROW_DELAY;
+				
+			when S_ROW_DELAY =>
 				if (row >= sx)
 				then
 					state <= S_COL;
 				else
-					x		<= x + dx;
-					row		<= row + '1';
-					
-					DV_O	<= '1';
-					
-					state	<= S_WAIT_FOR_MOVE;
-					nstate	<= S_ROW_DELAY;
-				end if;
-				
-			when S_ROW_DELAY =>
-				if (timer >= ROW_DELAY_I) 
-				then
-					state <= S_SAMPLE;
-					timer <= (others => '0');
+					if (timer >= ROW_DELAY_I) 
+					then
+						state <= S_SAMPLE;
+						timer <= (others => '0');
+					end if;
 				end if;
 				
 			when S_COL =>
+				x		<= ox;
+				row		<= (others => '0');
+				
+				y		<= y + dy;
+				col		<= col + '1';
+				
+				DV_O	<= '1';
+				
+				state	<= S_WAIT_FOR_MOVE;
+				nstate	<= S_COL_DELAY;
+				
+			when S_COL_DELAY =>
 				if (col >= sy)
 				then
 					x 		<= (others => '0');
@@ -181,23 +193,11 @@ begin
 					state	<= S_WAIT_FOR_MOVE;
 					nstate	<= S_IDLE;
 				else
-					x		<= ox;
-					row		<= (others => '0');
-					
-					y		<= y + dy;
-					col		<= col + '1';
-					
-					DV_O	<= '1';
-					
-					state	<= S_WAIT_FOR_MOVE;
-					nstate	<= S_COL_DELAY;
-				end if;
-				
-			when S_COL_DELAY =>
-				if (timer >= COL_DELAY_I) 
-				then
-					state <= S_SAMPLE;
-					timer <= (others => '0');
+					if (timer >= COL_DELAY_I) 
+					then
+						state <= S_SAMPLE;
+						timer <= (others => '0');
+					end if;
 				end if;
 			
 			when S_ABORT => 
