@@ -43,7 +43,7 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 16	=> x"030E",		-- CTRL DELAY (2560ns steps) 0us-167.77216ms 	0x030E =   2ms
 17	=> x"2710",		-- INI DELAY  (  10ns steps) 0us-655.36us		0x2710 = 100us
 18	=> x"05DC",		-- COL DELAY  (  10ns steps) 0us-655.36us		0x05DC =  15us
-19	=> x"05DC",		-- ROW DELAY  (  10ns steps) 0us-655.36us		0x05DC =  15us
+19	=> x"1388",		-- ROW DELAY  (  10ns steps) 0us-655.36us		0x1388 =  50us (Necessary to allow DAC to jump back)
 
 20 => x"4000",		-- Transform Matrix C00
 21 => x"0000",		-- Transform Matrix C01

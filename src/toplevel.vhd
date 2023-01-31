@@ -1,5 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
 use work.util.all;
 
 entity toplevel is
@@ -150,6 +151,8 @@ signal adc_ch1			: std_logic_vector(15 downto 0);
 
 signal adc_dv			: std_logic;
 signal adc_data			: std_logic_vector(15 downto 0);
+
+constant center			: std_logic_vector(15 downto 0) := x"8000";
 
 -- TESTIMG
 signal tst_dv			: std_logic;
@@ -503,7 +506,7 @@ port map (
 	
 	SAMPLE_I	=> adc_sample,
 	
-	CONV_O		=> adc_conv,
+	CONV_O		=> ADC_CNV_O,
 	SCK_O		=> ADC_SCK_O,
 	SD0_I		=> ADC_SD0_I,
 	SD1_I		=> ADC_SD1_I,
@@ -513,13 +516,11 @@ port map (
 	CH1_O		=> adc_ch1
 );
 
-ADC_CNV_O <= adc_conv;
-
 DBG_O <= (
-	0	=> adc_sample,
-	1	=> adc_conv,
-	2	=> ADC_SD0_I,--adc_ch_dv,
-	3	=> ADC_SD1_I,
+	0	=> '0',
+	1	=> pat_sample,
+	2	=> trn_dv,
+	3	=> dac_done,
 	others => '0'
 );
 
@@ -529,9 +530,9 @@ begin
 		adc_dv <= adc_ch_dv;
 
 		if (reg(0)(0) = '0') then
-			adc_data <= adc_ch0;
+			adc_data <= std_logic_vector(unsigned(adc_ch0) + unsigned(center));
 		else
-			adc_data <= adc_ch1;
+			adc_data <= std_logic_vector(unsigned(adc_ch1) + unsigned(center));
 		end if;
 	end if;
 end process;
