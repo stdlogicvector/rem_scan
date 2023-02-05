@@ -1,6 +1,7 @@
 library IEEE, UNISIM;
 use IEEE.STD_LOGIC_1164.ALL;
 use UNISIM.VCOMPONENTS.ALL;
+use work.util.all;
 
 entity adc is
 	Port (
@@ -17,6 +18,8 @@ entity adc is
 		DV_O 		: OUT STD_LOGIC := '0';
 		CH0_O 		: OUT STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 		CH1_O 		: OUT STD_LOGIC_VECTOR (15 downto 0) := (others => '0')
+
+		;DBG_O		: OUT STD_LOGIC_VECTOR(2 downto 0)
 	);
 end adc;
 
@@ -27,33 +30,29 @@ signal ch1_reg 	: STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 
 signal data_bit : integer range 0 to 17 := 0;
 
-type state_t is (IDLE, WAIT_STATE, CONVERSION, LOAD_DATA, READ_DATA, DATA_READY);
-signal state 	: state_t := IDLE;
+type state_t is (
+	INIT,			-- 0
+	IDLE,			-- 1
+	WAIT_STATE,		-- 2
+	CONVERSION,		-- 3
+	READ_DATA,		-- 4
+	DATA_READY,		-- 5
+	WAIT_FOR_IDLE	-- 6
+);
+signal state 	: state_t := INIT;
+
+attribute fsm_encoding : string;
+attribute fsm_encoding of state : signal is "gray";
 
 signal sck		: STD_LOGIC := '0';
 signal inited	: STD_LOGIC := '0';
 
-constant timedout : integer := 127;
+constant timedout : integer := 120;
 signal timeout	  : integer range 0 to timedout := 0;
 
 begin
 
---SCK_O_FWD : ODDR2
---	generic map (
---		DDR_ALIGNMENT => "NONE", 		-- Sets output alignment to "NONE", "C0", "C1" 
---		INIT => '0', 					-- Sets initial state of the Q output to '0' or '1'
---		SRTYPE => "SYNC"				-- Specifies "SYNC" or "ASYNC" set/RST_I
---	)
---	port map (
---		Q 	=> SCK_O, 					-- 1-bit output data
---		C0	=> CLK_I,					-- 1-bit clock input
---		C1	=> not CLK_I,				-- 1-bit clock input
---		CE	=> sck_en,			  		-- 1-bit clock enable input
---		D0	=> '0',						-- 1-bit data input (associated with C0)
---		D1	=> '1',						-- 1-bit data input (associated with C1)
---		R	=> RST_I,					-- 1-bit RST_I input
---		S	=> '0'
---	);
+DBG_O <= int2vec(state_t'pos(state), 3);
 
 SCK_O <= sck;
 
@@ -61,7 +60,7 @@ process(CLK_I) is
 begin
 	if rising_edge(CLK_I) then
 		if (RST_I = '1') then
-			state <= IDLE;
+			state <= INIT;
 			inited <= '0';
 		else
 			DV_O <= '0';
@@ -70,45 +69,50 @@ begin
 			timeout <= timeout + 1;
 			
 			case state is
+			when INIT =>
+				if (SD0_I = '0') OR (SD1_I = '0') then
+					state <= WAIT_STATE;
+				elsif (inited = '1') then
+					state <= IDLE;
+				end if;
+
+				timeout  <= 0;
+				data_bit <= 0;
+				sck <= '0';
 
 			when IDLE =>
-				if (inited = '0') AND ((SD0_I = '0') OR (SD1_I = '0')) then
-					state 	<= WAIT_STATE;
+				if (SAMPLE_I = '1') then
+					state	 <= WAIT_STATE;
 				end if;
 
-				if (SAMPLE_I = '1') then
-					timeout  <= 0;
-					state	 <= WAIT_STATE;
-					data_bit <= 0;
-				end if;
+				timeout  <= 0;
+				data_bit <= 0;
+				sck <= '0';
 				
 			when WAIT_STATE =>
 				if ((SD0_I = '1') AND (SD1_I= '1')) OR (inited = '0') then
 					CONV_O  <= '1';
 					
-					if (data_bit = 5) then
+					if (data_bit = 3) then
+						data_bit <= 0;
 						state <= CONVERSION;
 					else
 						data_bit <= data_bit + 1;
+						state <= WAIT_STATE;
 					end if;
 				elsif timeout = timedout then
-					DV_O  <= '1';	-- For Testing
-					state <= IDLE;
+					inited <= '0';
+					state <= INIT;
 				end if;
 				
 			when CONVERSION =>
 				if (SD0_I = '0') AND (SD1_I = '0') then
-					state <= LOAD_DATA;
+					state <= READ_DATA;
 				elsif timeout = timedout then
-					DV_O  <= '1';	-- For Testing
-					state <= IDLE;
+					inited <= '0';
+					state <= INIT;
 				end if;
-			
-			when LOAD_DATA =>
-				sck <= '0';
-				data_bit <= 0;
-				state <= READ_DATA;
-			
+						
 			when READ_DATA =>
 				sck <= not sck;
 
@@ -120,6 +124,7 @@ begin
 						state <= DATA_READY;
 					else
 						data_bit <= data_bit + 1;
+						state <= READ_DATA;
 					end if;
 				end if;
 			
@@ -127,10 +132,23 @@ begin
 				CH0_O <= ch0_reg;
 				CH1_O <= ch1_reg;
 				
-				inited	<= '1';
-				DV_O	<= '1';
-				state	<= IDLE;
+				DV_O	<= inited;
 				
+				timeout	<= 0;
+				state	<= WAIT_FOR_IDLE;
+
+			when WAIT_FOR_IDLE =>
+				if (SD0_I = '1') AND (SD1_I = '1') then
+					inited <= '1';
+					state <= IDLE;
+				elsif timeout = timedout then
+					state <= INIT;
+				else
+					state <= WAIT_FOR_IDLE;
+				end if;
+				
+			when OTHERS =>
+				state <= IDLE;
 			end case;
 		end if;
 	end if;

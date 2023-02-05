@@ -15,12 +15,12 @@ entity transform is
 		X_O 		: out STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 		Y_O 		: out STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
 		
-		C00_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"4000";
-		C01_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
-		C02_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
-		C10_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
-		C11_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"4000";
-		C12_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000"
+		CA_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"4000";
+		CB_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		CC_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		CD_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"4000";
+		CE_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000";
+		CF_I		: in  STD_LOGIC_VECTOR (15 downto 0) := x"0000"
 	);
 end transform;
 
@@ -39,9 +39,9 @@ begin
 
 -- Apply 2D Transformation Matrix to Coordinates
 --
---		[C00	C01  C02]		[Xi]
---		[C10	C11  C12] 	*	[Yi]  = [Xo Yo 1]
---		[ 0	 0		1 ]		[ 1]
+--		[A	C  E]		[Xi]
+--		[B	D  F] 	*	[Yi]  = [Xo Yo 1]
+--		[0	0  1]		[ 1]
 
 process (CLK_I)
 begin
@@ -60,14 +60,14 @@ begin
 				end if;
 				
 			when MULT_1 =>
-				mx1 <= signed(X_I) * signed(C00_I);
-				my1 <= signed(Y_I) * signed(C01_I);
+				mx1 <= signed(X_I) * signed(CA_I);
+				my1 <= signed(Y_I) * signed(CC_I);
 				
 				state <= MULT_2;
 				
 			when MULT_2 =>
-				mx2 <= signed(X_I) * signed(C10_I);
-				my2 <= signed(Y_I) * signed(C11_I);
+				mx2 <= signed(X_I) * signed(CB_I);
+				my2 <= signed(Y_I) * signed(CD_I);
 				
 				state <= ADD_1;
 				
@@ -78,8 +78,8 @@ begin
 				state <= ADD_2;
 			
 			when ADD_2 =>
-				x <= x + signed(C02_I);	-- Translation
-				y <= y + signed(C12_I);
+				x <= x + signed(CE_I);	-- Translation
+				y <= y + signed(CF_I);
 				
 				state <= OUTPUT;
 			

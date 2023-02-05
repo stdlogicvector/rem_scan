@@ -34,14 +34,14 @@ entity toplevel is
 		
 		UART_TX_O	: out	STD_LOGIC := '1';		-- Control Interface to PC
 		UART_RX_I	: in	STD_LOGIC;
-		UART_RTS_I	: in	STD_LOGIC;
-		UART_CTS_O	: out	STD_LOGIC := '0';
+--		UART_RTS_I	: in	STD_LOGIC;
+--		UART_CTS_O	: out	STD_LOGIC := '0';
 --		UART_DTR_I	: in	STD_LOGIC;
 --		UART_DSR_O	: out	STD_LOGIC := '0';
 --		UART_DCD_O	: out	STD_LOGIC := '0';
 --		UART_RI_O	: out	STD_LOGIC := '0';
 		
-		DBG_O		: out	STD_LOGIC_VECTOR(3 downto 0)
+		DBG_O		: out	STD_LOGIC_VECTOR(5 downto 0)
 	);
 end toplevel;
 
@@ -210,8 +210,8 @@ port map (
 	RX_I	 		=> UART_RX_I,
 	TX_O 			=> UART_TX_O,
 	
-	CTS_I			=> UART_RTS_I,
-	RTS_O			=> UART_CTS_O,
+--	CTS_I			=> UART_RTS_I,
+--	RTS_O			=> UART_CTS_O,
 	
 	TX_DONE_O		=> open,
 	
@@ -379,13 +379,11 @@ port map (
 	START_I 	=> pat_start,
 	ABORT_I		=> pat_abort,
 	BUSY_O 		=> pat_busy,
-	
-	OFFSET_X_I	=> reg(8),
-	OFFSET_Y_I	=> reg(9),
-	STEPS_X_I	=> reg(10),
-	STEPS_Y_I	=> reg(11),
-	DELTA_X_I	=> reg(12),
-	DELTA_Y_I	=> reg(13),
+
+	STEPS_X_I	=> reg(8),
+	STEPS_Y_I	=> reg(9),
+	DELTA_X_I	=> reg(10),
+	DELTA_Y_I	=> reg(11),
 	
 	INI_DELAY_I	=> reg(17),
 	COL_DELAY_I	=> reg(18),
@@ -415,12 +413,12 @@ port map (
 	X_O			=> trn_x,
 	Y_O			=> trn_y,
 	
-	C00_I		=> reg(20),
-	C01_I		=> reg(21),
-	C02_I		=> reg(22),
-	C10_I		=> reg(23),
-	C11_I		=> reg(24),
-	C12_I		=> reg(25)
+	CA_I		=> reg(20),
+	CB_I		=> reg(22),
+	CC_I		=> reg(24),
+	CD_I		=> reg(21),
+	CE_I		=> reg(23),
+	CF_I		=> reg(25)
 );
 
 dac : entity work.dac
@@ -506,8 +504,8 @@ port map (
 	
 	SAMPLE_I	=> adc_sample,
 	
-	CONV_O		=> ADC_CNV_O,
-	SCK_O		=> ADC_SCK_O,
+	CONV_O		=> adc_conv,
+	SCK_O		=> adc_sck,
 	SD0_I		=> ADC_SD0_I,
 	SD1_I		=> ADC_SD1_I,
 	
@@ -516,11 +514,16 @@ port map (
 	CH1_O		=> adc_ch1
 );
 
+ADC_CNV_O	<= adc_conv;
+ADC_SCK_O	<= adc_sck;
+
 DBG_O <= (
-	0	=> '0',
-	1	=> pat_sample,
-	2	=> trn_dv,
-	3	=> dac_done,
+	0	=> pat_sample,
+	1	=> adc_sample,
+	2	=> adc_ch_dv,
+	3	=> adc_conv,
+	4	=> adc_sck,
+	5	=> ADC_SD0_I AND ADC_SD1_I,
 	others => '0'
 );
 

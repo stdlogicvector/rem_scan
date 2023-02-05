@@ -12,9 +12,6 @@ entity pattern is
 		ABORT_I		: in	STD_LOGIC;
 		BUSY_O		: out	STD_LOGIC := '0';
 		
-		OFFSET_X_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
-		OFFSET_Y_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
-		
 		STEPS_X_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 		STEPS_Y_I	: in 	STD_LOGIC_VECTOR (15 downto 0);
 		
@@ -59,7 +56,6 @@ signal nstate	: state_t := S_IDLE;
 
 signal x,y		: signed(15 downto 0) := (others => '0');
 signal dx,dy	: signed(15 downto 0) := (others => '0');
-signal ox,oy	: signed(15 downto 0) := (others => '0');
 
 signal sx,sy	: std_logic_vector(15 downto 0) := (others => '0');
 signal row,col	: std_logic_vector(15 downto 0) := (others => '0');
@@ -97,9 +93,6 @@ begin
 				if (START_I = '1')
 				then
 					state		<= S_INIT;
-					
-					ox <= signed(OFFSET_X_I);
-					oy <= signed(OFFSET_Y_I);
 				
 					dx <= signed(DELTA_X_I);
 					dy <= signed(DELTA_Y_I);
@@ -113,8 +106,8 @@ begin
 				end if;
 				
 			when S_INIT =>
-				x		<= ox;
-				y		<= oy;
+				x		<= (others => '0');
+				y		<= (others => '0');
 				DV_O	<= '1';
 				
 				timer <= (others => '0');
@@ -171,7 +164,7 @@ begin
 				end if;
 				
 			when S_ROW =>
-				x		<= ox;
+				x		<= (others => '0');
 				row		<= (others => '0');
 				
 				y		<= y + dy;
