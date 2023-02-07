@@ -141,7 +141,6 @@ signal spi_busy			: std_logic;
 signal spi_data_tx		: std_logic_vector(23 downto 0);
 
 -- ADC
-signal adc_sample		: std_logic;
 signal adc_conv			: std_logic;
 signal adc_sck			: std_logic;
 
@@ -149,8 +148,13 @@ signal adc_ch_dv		: std_logic;
 signal adc_ch0			: std_logic_vector(15 downto 0);
 signal adc_ch1			: std_logic_vector(15 downto 0);
 
+signal adc_sample		: std_logic;
 signal adc_dv			: std_logic;
 signal adc_data			: std_logic_vector(15 downto 0);
+
+signal adc_avg_sample	: std_logic;
+signal adc_avg_dv		: std_logic;
+signal adc_avg_data		: std_logic_vector(15 downto 0);
 
 constant center			: std_logic_vector(15 downto 0) := x"8000";
 
@@ -476,9 +480,6 @@ port map (
 	MOSI_O		=> DAC_MOSI_O	
 );
 
---TODO: Averaging
--- (pat_sample triggers statemachine that generates multiple samples and averages them)
-
 testimg : entity work.testimg
 port map (
 	CLK_I		=> clk100,
@@ -495,6 +496,25 @@ port map (
 
 	DV_O		=> tst_dv,
 	DATA_O		=> tst_data
+);
+
+average : entity work.average
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> reset,
+
+	ENABLE_I	=> reg(0)(3),
+
+	NUMBER_I	=> reg(2)(3 downto 0),
+	DELAY_I		=> reg(3),
+
+	SAMPLE_I	=> adc_avg_sample,
+	DV_O		=> adc_avg_dv,
+	DATA_O		=> adc_avg_data,
+
+	SAMPLE_O	=> adc_sample,
+	DV_I		=> adc_dv,
+	DATA_I		=> adc_data
 );
 
 adc : entity work.adc
@@ -516,16 +536,6 @@ port map (
 
 ADC_CNV_O	<= adc_conv;
 ADC_SCK_O	<= adc_sck;
-
-DBG_O <= (
-	0	=> pat_sample,
-	1	=> adc_sample,
-	2	=> adc_ch_dv,
-	3	=> adc_conv,
-	4	=> adc_sck,
-	5	=> ADC_SD0_I AND ADC_SD1_I,
-	others => '0'
-);
 
 adc_mux : process(clk100)
 begin
@@ -551,9 +561,9 @@ port map (
 	DV_O		=> vid_dv,
 	DATA_O		=> vid_data,
 
-	CH0_SAMPLE_O	=> adc_sample,
-	CH0_DV_I		=> adc_dv,
-	CH0_DATA_I		=> adc_data,
+	CH0_SAMPLE_O	=> adc_avg_sample,
+	CH0_DV_I		=> adc_avg_dv,
+	CH0_DATA_I		=> adc_avg_data,
 
 	CH1_SAMPLE_O	=> tst_sample,
 	CH1_DV_I		=> tst_dv,
@@ -578,6 +588,16 @@ port map (
 	PUT_ACK_I	=> video_put_ack,
 	TX_CHAR_O	=> video_tx_char,
 	TX_FULL_I	=> video_tx_full
+);
+
+DBG_O <= (
+	0	=> pat_sample,
+	1	=> adc_sample,
+	2	=> adc_ch_dv,
+	3	=> adc_conv,
+	4	=> adc_sck,
+	5	=> ADC_SD0_I AND ADC_SD1_I,
+	others => '0'
 );
 
 end rem_scan;

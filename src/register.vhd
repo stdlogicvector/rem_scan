@@ -31,8 +31,13 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 	0		=> '1',	-- Channel Select
 	1		=> '1',	-- 8-Bit Mode
 	2		=> '0', -- Source Select
+	3		=> '0', -- Enable Averaging
 	others	=> '0'
 	),
+
+1	=> x"0000",		-- Testimage Mode
+2	=> x"0000",		-- Samples to Average
+3	=> x"0000",		-- Delay between Samples for Averaging (10ns steps)
 
 8	=> x"0100",		-- STEPS X
 9	=> x"0100",		-- STEPS Y
