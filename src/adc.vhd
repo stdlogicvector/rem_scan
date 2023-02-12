@@ -70,9 +70,14 @@ begin
 			
 			case state is
 			when INIT =>
-				if (SD0_I = '0') OR (SD1_I = '0') then
-					state <= WAIT_STATE;
-				elsif (inited = '1') then
+--				if (SD0_I = '0') OR (SD1_I = '0') then
+--					state <= WAIT_STATE;
+--				elsif (inited = '1') then
+--					state <= IDLE;
+--				end if;
+
+				if (SD0_I = '1') AND (SD1_I = '1') then
+					inited <= '1';
 					state <= IDLE;
 				end if;
 

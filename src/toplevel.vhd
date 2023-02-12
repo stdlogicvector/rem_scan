@@ -18,7 +18,7 @@ entity toplevel is
 		CLK50_I		: in	STD_LOGIC;
 		RST_I		: in	STD_LOGIC;
 		
-		nCONTROL_O	: out	STD_LOGIC := '1';		-- Acquire Control over REM (active Low)
+		CONTROL_O	: out	STD_LOGIC := '0';		-- Acquire Control over REM (active Low, but inverted by OpenDrain MOSFET)
 		
 		DAC_SCK_O	: out	STD_LOGIC := '0';		-- DAC for X/Y Out
 		DAC_nCS_O	: out	STD_LOGIC := '1';
@@ -97,7 +97,7 @@ signal uart_reply_args	: std_logic_vector((UART_CMD_MAX_ARGS*UART_CMD_BITS)-1 do
 signal uart_reply_argn	: std_logic_vector(clogb2(UART_CMD_MAX_ARGS)-1 downto 0);
 
 -- CONTROL
-signal control_o		: std_logic;
+--signal control_o		: std_logic;
 
 signal scan_start		: std_logic;
 signal scan_abort		: std_logic;
@@ -156,6 +156,8 @@ signal adc_avg_sample	: std_logic;
 signal adc_avg_dv		: std_logic;
 signal adc_avg_data		: std_logic_vector(15 downto 0);
 
+signal adc_dbg			: std_logic_vector(2 downto 0);
+
 constant center			: std_logic_vector(15 downto 0) := x"8000";
 
 -- TESTIMG
@@ -167,8 +169,6 @@ signal tst_sample		: std_logic;
 signal vid_dv			: std_logic;
 signal vid_data			: std_logic_vector(15 downto 0);
 signal vid_sent			: std_logic;
-
-signal counter			: std_logic_vector(10 downto 0) := (others => '0');
 
 begin
 
@@ -189,17 +189,6 @@ port map (
 );
 
 reset <= not RST_I;
-
-process(clk100)
-begin
-	if rising_edge(clk100) then
-		if reset = '1' then
-			counter <= (others => '0');
-		else
-			counter <= inc(counter);
-		end if;
-	end if;
-end process;
 
 uart : entity work.uart
 generic map (
@@ -352,14 +341,12 @@ port map (
 	REGISTER_O		=> reg
 );
 
-nCONTROL_O <= not control_o;
-
 control : entity work.control
 port map (
 	CLK_I 			=> clk100,
 	RST_I 			=> reset,
 	
-	CONTROL_O		=> control_o,
+	CONTROL_O		=> CONTROL_O,
 		
 	SCAN_START_I	=> scan_start,
 	SCAN_ABORT_I	=> scan_abort,
@@ -418,10 +405,10 @@ port map (
 	Y_O			=> trn_y,
 	
 	CA_I		=> reg(20),
-	CB_I		=> reg(22),
-	CC_I		=> reg(24),
-	CD_I		=> reg(21),
-	CE_I		=> reg(23),
+	CB_I		=> reg(21),
+	CC_I		=> reg(22),
+	CD_I		=> reg(23),
+	CE_I		=> reg(24),
 	CF_I		=> reg(25)
 );
 
@@ -504,8 +491,9 @@ port map (
 	RST_I		=> reset,
 
 	ENABLE_I	=> reg(0)(3),
+	ABORT_I		=> pat_abort,
 
-	NUMBER_I	=> reg(2)(3 downto 0),
+	NUMBER_I	=> reg(2)(7 downto 0),
 	DELAY_I		=> reg(3),
 
 	SAMPLE_I	=> adc_avg_sample,
@@ -532,6 +520,8 @@ port map (
 	DV_O		=> adc_ch_dv,
 	CH0_O		=> adc_ch0,
 	CH1_O		=> adc_ch1
+
+	,DBG_O		=> adc_dbg
 );
 
 ADC_CNV_O	<= adc_conv;
@@ -591,12 +581,13 @@ port map (
 );
 
 DBG_O <= (
-	0	=> pat_sample,
-	1	=> adc_sample,
-	2	=> adc_ch_dv,
-	3	=> adc_conv,
-	4	=> adc_sck,
-	5	=> ADC_SD0_I AND ADC_SD1_I,
+	0	=> adc_sample,
+--	1	=> adc_conv,
+--	2	=> ADC_SD0_I,
+--	3	=> ADC_SD1_I,
+	1	=> adc_dbg(0),
+	2	=> adc_dbg(1),
+	3	=> adc_dbg(2),
 	others => '0'
 );
 
