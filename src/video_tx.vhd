@@ -52,27 +52,13 @@ begin
 				data <= DATA_I;
 				
 				if DV_I = '1' then
-					state <= S_SEND_HI;
-				end if;
-				
-			when S_SEND_HI =>
-				TX_CHAR_O	<= data(15 downto 8);
-				
-				if (TX_FULL_I = '0') then
-					PUT_CHAR_O	<= '1';
-					state		<= S_WAIT_HI;
-				end if;
-				
-			when S_WAIT_HI =>
-				if (PUT_ACK_I = '1') then
 					if (LOW_RES_I = '0') then
 						state <= S_SEND_LO;
 					else
-						state	<= S_IDLE;
-						SENT_O	<= '1';
+						state <= S_SEND_HI;
 					end if;
 				end if;
-					
+				
 			when S_SEND_LO =>
 				TX_CHAR_O	<= data(7 downto 0);
 				
@@ -82,6 +68,19 @@ begin
 				end if;
 				
 			when S_WAIT_LO =>
+				if (PUT_ACK_I = '1') then
+					state <= S_SEND_HI;
+				end if;
+					
+			when S_SEND_HI =>
+				TX_CHAR_O	<= data(15 downto 8);
+				
+				if (TX_FULL_I = '0') then
+					PUT_CHAR_O	<= '1';
+					state		<= S_WAIT_HI;
+				end if;
+				
+			when S_WAIT_HI =>
 				if (PUT_ACK_I = '1') then
 					state	<= S_IDLE;
 					SENT_O	<= '1';

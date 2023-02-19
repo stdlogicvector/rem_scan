@@ -32,22 +32,25 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 	1		=> '1',	-- 8-Bit Mode
 	2		=> '0', -- Source Select
 	3		=> '0', -- Enable Averaging
+	4		=> '1',	-- Invert Values
+	5		=> '1',	-- Shift Range
 	others	=> '0'
 	),
 
 1	=> x"0000",		-- Testimage Mode
 2	=> x"0000",		-- Samples to Average
 3	=> x"0000",		-- Delay between Samples for Averaging (10ns steps)
+4	=> x"8000",		-- ADC Value Offset
 
 8	=> x"0100",		-- STEPS X
 9	=> x"0100",		-- STEPS Y
 10	=> x"00FF",		-- DELTA X
 11	=> x"00FF",		-- DELTA Y
 
-16	=> x"E4E1",		-- CTRL DELAY (2560ns steps) 0us-167.77216ms 	0xE4E1 = 150ms
-17	=> x"2710",		-- INI DELAY  (  10ns steps) 0us-655.36us		0x2710 = 100us
-18	=> x"05DC",		-- COL DELAY  (  10ns steps) 0us-655.36us		0x05DC =  15us
-19	=> x"1388",		-- ROW DELAY  (  10ns steps) 0us-655.36us		0x1388 =  50us (Necessary to allow DAC to jump back)
+16	=> x"7270",		-- CTRL DELAY (10.24us steps) 0us-671.088ms 	0x7270 = 300ms
+17	=> x"2710",		-- INI DELAY  (   10ns steps) 0us-655.36us		0x2710 = 100us
+18	=> x"05DC",		-- COL DELAY  (   10ns steps) 0us-655.36us		0x05DC =  15us
+19	=> x"1388",		-- ROW DELAY  (   10ns steps) 0us-655.36us		0x1388 =  50us (Necessary to allow DAC to jump back)
 
 20 => x"4000",		-- Transform Matrix a
 21 => x"0000",		-- Transform Matrix b

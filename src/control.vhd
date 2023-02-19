@@ -37,7 +37,7 @@ type state_t is (
 
 signal state	: state_t := S_IDLE;
 
-signal timer	: std_logic_vector(23 downto 0) := x"000000";
+signal timer	: std_logic_vector(25 downto 0) := (others => '0');
 
 begin
 
@@ -74,7 +74,7 @@ begin
 				end if;
 			
 			when S_DELAY =>
-				if (timer(23 downto 8) >= CTRL_DELAY_I)
+				if (timer(25 downto 10) >= CTRL_DELAY_I)
 				then
 					state <= S_START;
 				end if;

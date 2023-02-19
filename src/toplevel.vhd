@@ -158,8 +158,6 @@ signal adc_avg_data		: std_logic_vector(15 downto 0);
 
 signal adc_dbg			: std_logic_vector(2 downto 0);
 
-constant center			: std_logic_vector(15 downto 0) := x"8000";
-
 -- TESTIMG
 signal tst_dv			: std_logic;
 signal tst_data			: std_logic_vector(15 downto 0);
@@ -527,18 +525,24 @@ port map (
 ADC_CNV_O	<= adc_conv;
 ADC_SCK_O	<= adc_sck;
 
-adc_mux : process(clk100)
-begin
-	if rising_edge(clk100) then
-		adc_dv <= adc_ch_dv;
+adc_mux : entity work.adc_mux
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> reset,
 
-		if (reg(0)(0) = '0') then
-			adc_data <= std_logic_vector(unsigned(adc_ch0) + unsigned(center));
-		else
-			adc_data <= std_logic_vector(unsigned(adc_ch1) + unsigned(center));
-		end if;
-	end if;
-end process;
+	CHANNEL_I	=> reg(0)(0),
+	INVERT_I	=> reg(0)(4),
+	SHIFT_I		=> reg(0)(5),
+
+	OFFSET_I	=> reg(4),
+
+	DV_O		=> adc_dv,
+	DATA_O		=> adc_data,
+
+	DV_I		=> adc_ch_dv,
+	CH0_DATA_I	=> adc_ch0,
+	CH1_DATA_I	=> adc_ch1
+);
 
 video_mux : entity work.video_mux
 port map (
