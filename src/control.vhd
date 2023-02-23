@@ -8,10 +8,12 @@ entity control is
 		RST_I			: in  STD_LOGIC;
 		
 		CONTROL_O		: out STD_LOGIC := '0';
+		LIVE_O			: out STD_LOGIC := '0';
 		
 		SCAN_START_I	: in  STD_LOGIC;
 		SCAN_ABORT_I	: in  STD_LOGIC;
 		SCAN_BUSY_I		: in  STD_LOGIC;
+		LIVE_I			: in  STD_LOGIC := '0';
 		
 		MUX_SELECT_O	: out	std_logic := '0';
 		MUX_SELECT_I	: in	std_logic;
@@ -39,6 +41,8 @@ signal state	: state_t := S_IDLE;
 
 signal timer	: std_logic_vector(25 downto 0) := (others => '0');
 
+signal live		: std_logic := '0';
+
 begin
 
 process(CLK_I)
@@ -56,15 +60,28 @@ begin
 			
 			case (state) is
 			when S_IDLE =>
-				if (SCAN_START_I = '1')
+				timer	<= (others => '0');
+
+				live	<= LIVE_I;
+
+				if (live = '1' AND LIVE_I = '1')
 				then
 					CONTROL_O	<= '1';
 					SCAN_BUSY_O <= '1';
-					timer	<= (others => '0');
+					LIVE_O		<= '1';
+
+					state <= S_DELAY;
+				elsif (SCAN_START_I = '1')
+				then
+					CONTROL_O	<= '1';
+					SCAN_BUSY_O <= '1';
+					LIVE_O		<= '0';
+					
 					state	<= S_GET_MUX;
 				else
 					SCAN_BUSY_O <= '0';
 					CONTROL_O	<= '0';
+					LIVE_O		<= '0';
 				end if;
 			
 			when S_GET_MUX =>
@@ -95,7 +112,11 @@ begin
 			
 				if (SCAN_BUSY_I = '0')
 				then
-					state <= S_LEAVE_MUX;
+					if (live = '1' AND LIVE_I = '1') then
+						state <= S_START;
+					else
+						state <= S_LEAVE_MUX;
+					end if;
 				end if;
 				
 			when S_LEAVE_MUX =>

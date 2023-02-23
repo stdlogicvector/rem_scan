@@ -31,7 +31,8 @@ entity pattern is
 		SAMPLED_I	: in	STD_LOGIC;
 		
 		ROW_O		: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
-		COL_O		: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0')
+		COL_O		: out	STD_LOGIC_VECTOR (15 downto 0) := (others => '0');
+		PIX_O		: out	STD_LOGIC_VECTOR (31 downto 0) := (others => '0')
 	);
 end pattern;
 
@@ -59,6 +60,7 @@ signal dx,dy	: signed(15 downto 0) := (others => '0');
 
 signal sx,sy	: std_logic_vector(15 downto 0) := (others => '0');
 signal row,col	: std_logic_vector(15 downto 0) := (others => '0');
+signal pix		: std_logic_vector(31 downto 0) := (others => '0');
 
 signal timer	: std_logic_vector(15 downto 0) := (others => '0');
 
@@ -123,17 +125,20 @@ begin
 					
 					row	<= (others => '0');
 					col	<= (others => '0');
+					pix <= (others => '0');
 				end if;
 
 			when S_SAMPLE =>
 				SAMPLE_O	<= '1';
 				ROW_O		<= row;
 				COL_O		<= col;
+				PIX_O		<= pix;
 				state 		<= S_WAIT_FOR_SAMPLE;
 					
 			when S_WAIT_FOR_SAMPLE =>
 				if (SAMPLED_I = '1')
 				then
+					pix	  <= pix + 1;
 					state <= S_COL;
 				end if;
 					

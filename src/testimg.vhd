@@ -1,5 +1,6 @@
-library IEEE, UNISIM;
+library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity testimg is
 	Port (
@@ -24,6 +25,8 @@ architecture Behavioral of testimg is
 
 signal dv_delay : std_logic_vector(15 downto 0);
 
+signal counter  : std_logic_vector(15 downto 0) := (others => '0');
+
 begin
   
 process(CLK_I)
@@ -32,6 +35,8 @@ begin
         
         dv_delay <= dv_delay(dv_delay'high-1 downto 0) & SAMPLE_I;
         DV_O <= dv_delay(dv_delay'high);
+
+        counter <= counter + '1';
 
         case (MODE_I) is
             when x"0" =>
@@ -44,13 +49,29 @@ begin
                 DATA_O <= COL_I(15 downto 8) & ROW_I(15 downto 8);
 
             when x"4" =>
-                DATA_O <= X_I(7 downto 0) & Y_I(7 downto 0);
+                DATA_O <= ROW_I(7 downto 0) & COL_I(7 downto 0);
             when x"5" =>
-                DATA_O <= X_I(7 downto 0) & Y_I(15 downto 8);
+                DATA_O <= ROW_I(7 downto 0) & COL_I(15 downto 8);
             when x"6" =>
-                DATA_O <= X_I(15 downto 8) & Y_I(7 downto 0);
+                DATA_O <= ROW_I(15 downto 8) & COL_I(7 downto 0);
             when x"7" =>
+                DATA_O <= ROW_I(15 downto 8) & COL_I(15 downto 8);
+
+            when x"8" =>
+                DATA_O <= X_I(7 downto 0) & Y_I(7 downto 0);
+            when x"9" =>
+                DATA_O <= X_I(7 downto 0) & Y_I(15 downto 8);
+            when x"A" =>
+                DATA_O <= X_I(15 downto 8) & Y_I(7 downto 0);
+            when x"B" =>
                 DATA_O <= X_I(15 downto 8) & Y_I(15 downto 8);
+
+            when x"C" =>
+                DATA_O <= counter;
+            when x"D" =>
+                DATA_O <= (15 => COL_I(0), 14 => ROW_I(0), others => '0');
+            when x"E" =>
+                DATA_O <= (15 => ROW_I(0), 14 => COL_I(0), others => '0');
 
             when others =>
                 DATA_O <= x"55AA";

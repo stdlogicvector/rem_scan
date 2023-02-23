@@ -40,7 +40,9 @@ entity uart_cmd_decoder is
 		-- Scan
 		SCAN_START_O	: out	std_logic := '0';
 		SCAN_ABORT_O	: out	std_logic := '0';
-		SCAN_BUSY_I		: in	std_logic := '0'
+		SCAN_BUSY_I		: in	std_logic := '0';
+
+		LIVE_O			: out	std_logic := '0'
 	);
 end uart_cmd_decoder;
 
@@ -54,6 +56,7 @@ constant READ_REG		: character := 'R';
 constant WRITE_REG		: character := 'W';
 constant START_SCAN		: character := 'S';
 constant ABORT_SCAN		: character := 'X';
+constant START_LIVE		: character := 'L';
 
 --------------------------------------------------------------------------------
 
@@ -61,6 +64,7 @@ constant id_reg_read	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(READ_R
 constant id_reg_write	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(WRITE_REG);
 constant id_scan_start	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START_SCAN);
 constant id_scan_abort	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ABORT_SCAN);
+constant id_live_start	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START_LIVE);
 
 -- Control Signals
 
@@ -150,6 +154,10 @@ begin
 					
 				when id_scan_abort =>
 					SCAN_ABORT_O <= '1';				
+					LIVE_O		 <= '0';
+				
+				when id_live_start =>
+					LIVE_O <= '1';
 		
 				when others =>
 					NULL;
@@ -191,8 +199,9 @@ begin
 					rpl_args(1) 	<= REG_DATA_I( 7 downto 0);
 					REPLY_ARGN_O	<= int2vec(2, ARG_NR_WIDTH);
 			 
-				when id_reg_write	|
-					  id_scan_abort	=>
+				when id_reg_write		|
+					  id_scan_abort		|
+					  id_live_start		=>
 					NEW_ACK_O	<= '1';				
 									
 				when id_scan_start =>

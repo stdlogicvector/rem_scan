@@ -700,7 +700,11 @@ impure function random_vec(min, max : integer; l : integer) return std_logic_vec
 begin
  	for i in vec'range loop
     	uniform(RAND_SEED1, RAND_SEED2, r);
-    	vec(i) := '1' when r > 0.5 else '0';
+    	if (r > 0.5) then
+			vec(i) := '1';
+		else
+			vec(i) := '0';
+		end if;
   	end loop;
   	
  	return vec;

@@ -7,9 +7,9 @@ END toplevel_tb;
  
 ARCHITECTURE behavior OF toplevel_tb IS 
 	signal CLK50_I		: std_logic := '0';
-	signal RST_I		: std_logic := '1';
+	signal RST_I		: std_logic := '0';
    
-	signal nCONTROL_O	: std_logic;
+	signal CONTROL_O	: std_logic;
 	
 	signal DAC_SCK_O	: std_logic;
 	signal DAC_nCS_O	: std_logic;
@@ -42,6 +42,12 @@ ARCHITECTURE behavior OF toplevel_tb IS
 		uart_puts("{S}", uart, UART_BAUDRATE);
 	end procedure;
 	
+	procedure live_start(signal uart : out std_logic) is
+	begin
+		log("Starting Live");
+		uart_puts("{L}", uart, UART_BAUDRATE);
+	end procedure;
+
 	procedure scan_abort(signal uart : out std_logic) is
 	begin
 		log("Aborting Scan");
@@ -51,15 +57,16 @@ ARCHITECTURE behavior OF toplevel_tb IS
 BEGIN
    	sim : process
 	begin		
-		RST_I <= '1';
-		wait for 100 ns;	
 		RST_I <= '0';
+		wait for 100 ns;	
+		RST_I <= '1';
 
 		wait for clk_period*10;
 
-		setReg(16, 20, RS232_TX);	-- CTRL Delay = 20*2560ns
+		--setReg(16, 20, RS232_TX);	-- CTRL Delay = 20*2560ns
 		
-		scan_start(RS232_TX);
+		--scan_start(RS232_TX);
+		live_start(RS232_TX);
 
 		wait;
 	end process;
@@ -77,7 +84,7 @@ BEGIN
 		CLK50_I			=> CLK50_I,
 		RST_I			=> RST_I,
 		
-		nCONTROL_O		=> nCONTROL_O,
+		CONTROL_O		=> CONTROL_O,
 		
 		DAC_SCK_O		=> DAC_SCK_O,
 		DAC_nCS_O		=> DAC_nCS_O,
@@ -92,7 +99,11 @@ BEGIN
 		ADC_SD1_I		=> ADC_SD1_I,
 		
 		UART_TX_O		=> RS232_RX,
-		UART_RX_I		=> RS232_TX
+		UART_RX_I		=> RS232_TX,
+		
+		VGA_VSYNC_O		=> open,
+		VGA_HSYNC_O		=> open,
+		VGA_GRAY_O		=> open
 	);
 
 	dac : entity work.tb_dac

@@ -52,6 +52,12 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 18	=> x"05DC",		-- COL DELAY  (   10ns steps) 0us-655.36us		0x05DC =  15us
 19	=> x"1388",		-- ROW DELAY  (   10ns steps) 0us-655.36us		0x1388 =  50us (Necessary to allow DAC to jump back)
 
+-- For Simulation
+--16	=> x"000F",
+--17	=> x"000F",
+--18	=> x"000F",
+--19	=> x"000F",
+
 20 => x"4000",		-- Transform Matrix a
 21 => x"0000",		-- Transform Matrix b
 22 => x"0000",		-- Transform Matrix c

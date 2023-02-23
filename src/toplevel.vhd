@@ -12,7 +12,9 @@ entity toplevel is
 		UART_FLOW_CTRL		: boolean := false;
 		UART_CMD_BITS		: integer := 8;
 		UART_CMD_MAX_ARGS	: integer := 4;
-		NR_OF_REGS			: integer := 32
+		NR_OF_REGS			: integer := 32;
+		VGA_HEIGHT			: integer := 300;
+		VGA_WIDTH			: integer := 400
 	);
 	Port (
 		CLK50_I		: in	STD_LOGIC;
@@ -41,14 +43,22 @@ entity toplevel is
 --		UART_DCD_O	: out	STD_LOGIC := '0';
 --		UART_RI_O	: out	STD_LOGIC := '0';
 		
-		DBG_O		: out	STD_LOGIC_VECTOR(5 downto 0)
+		VGA_VSYNC_O	: out	STD_LOGIC := '0';
+		VGA_HSYNC_O	: out	STD_LOGIC := '0';
+		VGA_GRAY_O	: out	STD_LOGIC_VECTOR(7 downto 0) := (others => '0')
+
+--		;DBG_O		: out	STD_LOGIC_VECTOR(5 downto 0)
 	);
 end toplevel;
 
 architecture rem_scan of toplevel is
 
 signal clk100			: std_logic := '0';
-signal reset			: std_logic := '1';
+signal rst100			: std_logic := '1';
+
+signal clk50			: std_logic := '0';
+signal rst50			: std_logic := '1';
+
 signal clk_ready		: std_logic := '0';
 
 -- UART		
@@ -98,6 +108,8 @@ signal uart_reply_argn	: std_logic_vector(clogb2(UART_CMD_MAX_ARGS)-1 downto 0);
 
 -- CONTROL
 --signal control_o		: std_logic;
+signal live_enable		: std_logic;
+signal live_mode		: std_logic;
 
 signal scan_start		: std_logic;
 signal scan_abort		: std_logic;
@@ -121,6 +133,7 @@ signal pat_busy			: std_logic;
 signal pat_sample		: std_logic;
 signal pat_row			: std_logic_vector(15 downto 0);
 signal pat_col			: std_logic_vector(15 downto 0);
+signal pat_pix			: std_logic_vector(31 downto 0);
 
 signal pat_dv			: std_logic;
 signal pat_x			: std_logic_vector(15 downto 0);
@@ -164,9 +177,24 @@ signal tst_data			: std_logic_vector(15 downto 0);
 signal tst_sample		: std_logic;
 
 -- VIDEO
+constant VID_ADDR_W		: integer := clogb2(VGA_HEIGHT*VGA_WIDTH);
+
 signal vid_dv			: std_logic;
 signal vid_data			: std_logic_vector(15 downto 0);
 signal vid_sent			: std_logic;
+
+signal uart_dv			: std_logic;
+signal uart_data		: std_logic_vector(15 downto 0);
+signal uart_sent		: std_logic;
+
+signal live_dv			: std_logic;
+signal live_addr		: std_logic_vector(VID_ADDR_W-1 downto 0);
+signal live_data		: std_logic_vector(15 downto 0);
+signal live_sent		: std_logic;
+
+-- VGA
+signal vga_addr			: std_logic_vector(VID_ADDR_W-1 downto 0);
+signal vga_data			: std_logic_vector(7 downto 0);
 
 begin
 
@@ -176,17 +204,19 @@ generic map (
 	DIFF_CLK_IN		=> false,
 	CLKFB_MULT		=> 20,
 	DIVCLK_DIVIDE	=> 1,
-	CLK_OUT_DIVIDE	=> ( 0 => 10, others => 1 )
+	CLK_OUT_DIVIDE	=> ( 0 => 10, 1 => 20, others => 1 )
 )
 port map (
 	CLK_Ip			=> CLK50_I,
 	
 	CLK0_O			=> clk100,	-- 50MHz * 20 / 10 = 100MHz
+	CLK1_O			=> clk50,
 	
 	LOCKED_O		=> clk_ready
 );
 
-reset <= not RST_I;
+rst100 <= not RST_I;
+rst50 <= rst100;
 
 uart : entity work.uart
 generic map (
@@ -196,7 +226,7 @@ generic map (
 )
 port map (
 	CLK_I			=> clk100,
-	RST_I 			=> reset,
+	RST_I 			=> rst100,
 	
 	RX_I	 		=> UART_RX_I,
 	TX_O 			=> UART_TX_O,
@@ -223,7 +253,7 @@ generic map (
 )
 port map (
 	CLK_I			=> clk100,
-	RST_I			=> reset,
+	RST_I			=> rst100,
 
 	SELECT_I		=> mux_select,
 	SELECT_O		=> mux_selected,
@@ -254,7 +284,7 @@ generic map (
 )
 port map (
 	CLK_I			=> clk100,
-	RST_I			=> reset,
+	RST_I			=> rst100,
 	
 	PUT_CHAR_O		=> cmd_put_char,
 	PUT_ACK_I		=> cmd_put_ack,
@@ -290,7 +320,7 @@ generic map (
 )
 port map (
 	CLK_I			=> clk100,
-	RESET_I			=> reset,
+	RESET_I			=> rst100,
 	
 	BUSY_O			=> cmd_busy,
 	
@@ -317,7 +347,9 @@ port map (
 	
 	SCAN_START_O	=> scan_start,
 	SCAN_ABORT_O	=> scan_abort,
-	SCAN_BUSY_I		=> scan_busy
+	SCAN_BUSY_I		=> scan_busy AND mux_select,	-- Only really busy when streaming data over UART
+
+	LIVE_O			=> live_enable
 );
 
 registers : entity work.registers
@@ -329,7 +361,7 @@ generic map (
 )
 port map (
 	CLK_I			=> clk100,
-	RST_I			=> reset,
+	RST_I			=> rst100,
 	
 	WRITE_I			=> reg_write,
 	ADDR_I			=> reg_addr,
@@ -342,14 +374,17 @@ port map (
 control : entity work.control
 port map (
 	CLK_I 			=> clk100,
-	RST_I 			=> reset,
+	RST_I 			=> rst100,
 	
 	CONTROL_O		=> CONTROL_O,
-		
+
 	SCAN_START_I	=> scan_start,
 	SCAN_ABORT_I	=> scan_abort,
-	SCAN_BUSY_O		=> scan_busy,
+	LIVE_I			=> live_enable,
 	
+	SCAN_BUSY_O		=> scan_busy,
+	LIVE_O			=> live_mode,	
+		
 	MUX_SELECT_O	=> mux_select,
 	MUX_SELECT_I	=> mux_selected,
 	
@@ -363,7 +398,7 @@ port map (
 pattern : entity work.pattern 
 port map (
 	CLK_I 		=> clk100,
-	RST_I 		=> reset,
+	RST_I 		=> rst100,
 	
 	START_I 	=> pat_start,
 	ABORT_I		=> pat_abort,
@@ -386,13 +421,14 @@ port map (
 	SAMPLE_O	=> pat_sample,
 	SAMPLED_I	=> vid_sent,
 	ROW_O		=> pat_row,
-	COL_O		=> pat_col
+	COL_O		=> pat_col,
+	PIX_O		=> pat_pix
 );
 
 transform : entity work.transform
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 	
 	DV_I		=> pat_dv,
 	X_I			=> pat_x,
@@ -416,7 +452,7 @@ generic map (
 )
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 	
 	CLEAR_I		=> '0',
 		
@@ -445,7 +481,7 @@ generic map (
 )
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 	
 	CLKDIV_I	=> x"01",
 	CPOL		=> '0',
@@ -468,7 +504,7 @@ port map (
 testimg : entity work.testimg
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 
 	SAMPLE_I	=> tst_sample,
 	MODE_I		=> reg(1)(3 downto 0),
@@ -486,7 +522,7 @@ port map (
 average : entity work.average
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 
 	ENABLE_I	=> reg(0)(3),
 	ABORT_I		=> pat_abort,
@@ -506,7 +542,7 @@ port map (
 adc : entity work.adc
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 	
 	SAMPLE_I	=> adc_sample,
 	
@@ -528,7 +564,7 @@ ADC_SCK_O	<= adc_sck;
 adc_mux : entity work.adc_mux
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 
 	CHANNEL_I	=> reg(0)(0),
 	INVERT_I	=> reg(0)(4),
@@ -544,10 +580,10 @@ port map (
 	CH1_DATA_I	=> adc_ch1
 );
 
-video_mux : entity work.video_mux
+source_mux : entity work.source_mux
 port map (
 	CLK_I		=> clk100,
-	RST_I		=> reset,
+	RST_I		=> rst100,
 
 	CHANNEL_I	=> reg(0)(2),
 
@@ -564,19 +600,76 @@ port map (
 	CH1_DATA_I		=> tst_data
 );
 
+video_mux : entity work.video_mux
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> rst100,
+
+	CHANNEL_I	=> live_mode,
+
+	SENT_O		=> vid_sent,
+	DV_I		=> vid_dv,
+	DATA_I		=> vid_data,
+
+	CH0_SENT_I		=> uart_sent,
+	CH0_DV_O		=> uart_dv,
+	CH0_DATA_O		=> uart_data,
+
+	CH1_SENT_I		=> live_sent,
+	CH1_DV_O		=> live_dv,
+	CH1_DATA_O		=> live_data
+);
+
+live_sent <= '1';
+live_addr <= pat_pix(VID_ADDR_W-1 downto 0);
+
+video_ram : entity work.ram
+generic map (
+	RAM_WIDTH	=> 8,
+	RAM_DEPTH	=> 2**VID_ADDR_W,
+	RAM_PERF	=> "HIGH_PERFORMANCE",
+	RAM_MODE_A	=> "WRITE_FIRST",
+	RAM_MODE_B	=> "READ_FIRST"
+)
+port map (
+	RESET_I		=> rst100,
+
+	A_CLK_I		=> clk100,
+	A_WEN_I		=> live_dv,
+	A_ADDR_I	=> live_addr,
+	A_DATA_I	=> live_data(15 downto 8),
+
+	B_CLK_I		=> clk50,
+	B_WEN_I		=> '0',
+	B_ADDR_I	=> vga_addr,
+	B_DATA_O	=> vga_data
+);
+
+vga : entity work.vga
+port map (
+	CLK_I		=> clk50,
+	RST_I		=> rst50,
+
+	ADDR_O		=> vga_addr,
+	DATA_I		=> vga_data,
+
+	HSYNC_O		=> VGA_HSYNC_O,
+	VSYNC_O		=> VGA_VSYNC_O,
+	GRAY_O		=> VGA_GRAY_O
+);
+
 --TODO: Video Signal Processing (LUT?, Brightness/Contrast?)
 
 video : entity work.video_tx
 port map (
 	CLK_I 		=> clk100,
-	RST_I 		=> reset,
+	RST_I 		=> rst100,
 		
 	LOW_RES_I	=> reg(0)(1),
-		
-	DV_I		=> vid_dv,
-	DATA_I 		=> vid_data,
-		
-	SENT_O		=> vid_sent,
+
+	SENT_O		=> uart_sent,
+	DV_I		=> uart_dv,
+	DATA_I 		=> uart_data,
 		
 	PUT_CHAR_O	=> video_put_char,
 	PUT_ACK_I	=> video_put_ack,
@@ -584,16 +677,16 @@ port map (
 	TX_FULL_I	=> video_tx_full
 );
 
-DBG_O <= (
-	0	=> adc_sample,
+--DBG_O <= (
+--	0	=> adc_sample,
 --	1	=> adc_conv,
 --	2	=> ADC_SD0_I,
 --	3	=> ADC_SD1_I,
-	1	=> adc_dbg(0),
-	2	=> adc_dbg(1),
-	3	=> adc_dbg(2),
-	others => '0'
-);
+--	1	=> adc_dbg(0),
+--	2	=> adc_dbg(1),
+--	3	=> adc_dbg(2),
+--	others => '0'
+--);
 
 end rem_scan;
 

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/mnt/vhdl/rem_scan/toplevel_tb_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="attributes" />
+            <top_module name="math_real" />
+            <top_module name="numeric_std" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_misc" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="textio" />
+            <top_module name="toplevel_tb" />
+            <top_module name="util" />
+            <top_module name="vcomponents" />
+            <top_module name="vital_primitives" />
+            <top_module name="vital_timing" />
+            <top_module name="vpkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="10" />
+   <wave_markers>
+      <marker time="15958360000000" label="" />
+   </wave_markers>
+   <wvobject fp_name="/toplevel_tb/clk50_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clk50_i</obj_property>
+      <obj_property name="ObjectShortName">clk50_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/rst_i" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rst_i</obj_property>
+      <obj_property name="ObjectShortName">rst_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/uut/rst100" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rst100</obj_property>
+      <obj_property name="ObjectShortName">rst100</obj_property>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/uut/rst50" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rst50</obj_property>
+      <obj_property name="ObjectShortName">rst50</obj_property>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/control_o" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">control_o</obj_property>
+      <obj_property name="ObjectShortName">control_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="group22" type="group">
+      <obj_property name="label">DAC</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/dac_sck_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_sck_o</obj_property>
+         <obj_property name="ObjectShortName">dac_sck_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/dac_ncs_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_ncs_o</obj_property>
+         <obj_property name="ObjectShortName">dac_ncs_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/dac_mosi_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_mosi_o</obj_property>
+         <obj_property name="ObjectShortName">dac_mosi_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/dac_miso_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_miso_i</obj_property>
+         <obj_property name="ObjectShortName">dac_miso_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/dac_nload_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_nload_o</obj_property>
+         <obj_property name="ObjectShortName">dac_nload_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/dac_nclr_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">dac_nclr_o</obj_property>
+         <obj_property name="ObjectShortName">dac_nclr_o</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group23" type="group">
+      <obj_property name="label">ADC</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/adc_cnv_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">adc_cnv_o</obj_property>
+         <obj_property name="ObjectShortName">adc_cnv_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/adc_sck_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">adc_sck_o</obj_property>
+         <obj_property name="ObjectShortName">adc_sck_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/adc_sd0_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">adc_sd0_i</obj_property>
+         <obj_property name="ObjectShortName">adc_sd0_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/adc_sd1_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">adc_sd1_i</obj_property>
+         <obj_property name="ObjectShortName">adc_sd1_i</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group24" type="group">
+      <obj_property name="label">RS232</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/rs232_tx" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">rs232_tx</obj_property>
+         <obj_property name="ObjectShortName">rs232_tx</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/rs232_rx" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">rs232_rx</obj_property>
+         <obj_property name="ObjectShortName">rs232_rx</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group21" type="group">
+      <obj_property name="label">VGA</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="group39" type="group">
+         <obj_property name="label">Internal</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject fp_name="/toplevel_tb/uut/vga/clk_i" type="logic" db_ref_id="1">
+            <obj_property name="ElementShortName">clk_i</obj_property>
+            <obj_property name="ObjectShortName">clk_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/addr_o" type="array" db_ref_id="1">
+            <obj_property name="ElementShortName">addr_o[16:0]</obj_property>
+            <obj_property name="ObjectShortName">addr_o[16:0]</obj_property>
+            <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/data_i" type="array" db_ref_id="1">
+            <obj_property name="ElementShortName">data_i[7:0]</obj_property>
+            <obj_property name="ObjectShortName">data_i[7:0]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/gray_o" type="array" db_ref_id="1">
+            <obj_property name="ElementShortName">gray_o[7:0]</obj_property>
+            <obj_property name="ObjectShortName">gray_o[7:0]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/hsync_o" type="logic" db_ref_id="1">
+            <obj_property name="ElementShortName">hsync_o</obj_property>
+            <obj_property name="ObjectShortName">hsync_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/vsync_o" type="logic" db_ref_id="1">
+            <obj_property name="ElementShortName">vsync_o</obj_property>
+            <obj_property name="ObjectShortName">vsync_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/h" type="other" db_ref_id="1">
+            <obj_property name="ElementShortName">h</obj_property>
+            <obj_property name="ObjectShortName">h</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/v" type="other" db_ref_id="1">
+            <obj_property name="ElementShortName">v</obj_property>
+            <obj_property name="ObjectShortName">v</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/p" type="other" db_ref_id="1">
+            <obj_property name="ElementShortName">p</obj_property>
+            <obj_property name="ObjectShortName">p</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/r" type="logic" db_ref_id="1">
+            <obj_property name="ElementShortName">r</obj_property>
+            <obj_property name="ObjectShortName">r</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/c" type="logic" db_ref_id="1">
+            <obj_property name="ElementShortName">c</obj_property>
+            <obj_property name="ObjectShortName">c</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/col" type="other" db_ref_id="1">
+            <obj_property name="ElementShortName">col</obj_property>
+            <obj_property name="ObjectShortName">col</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/row" type="other" db_ref_id="1">
+            <obj_property name="ElementShortName">row</obj_property>
+            <obj_property name="ObjectShortName">row</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/hsync" type="array" db_ref_id="1">
+            <obj_property name="ElementShortName">hsync[3:0]</obj_property>
+            <obj_property name="ObjectShortName">hsync[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/toplevel_tb/uut/vga/vsync" type="array" db_ref_id="1">
+            <obj_property name="ElementShortName">vsync[3:0]</obj_property>
+            <obj_property name="ObjectShortName">vsync[3:0]</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/vga_vsync_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">vga_vsync_o</obj_property>
+         <obj_property name="ObjectShortName">vga_vsync_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/vga_hsync_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">vga_hsync_o</obj_property>
+         <obj_property name="ObjectShortName">vga_hsync_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/vga_gray_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">vga_gray_o[7:0]</obj_property>
+         <obj_property name="ObjectShortName">vga_gray_o[7:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group55" type="group">
+      <obj_property name="label">Control</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/uut/control/state" type="other" db_ref_id="1">
+         <obj_property name="ElementShortName">state</obj_property>
+         <obj_property name="ObjectShortName">state</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/control_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">control_o</obj_property>
+         <obj_property name="ObjectShortName">control_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/live_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">live_o</obj_property>
+         <obj_property name="ObjectShortName">live_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_start_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_start_i</obj_property>
+         <obj_property name="ObjectShortName">scan_start_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_abort_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_abort_i</obj_property>
+         <obj_property name="ObjectShortName">scan_abort_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_busy_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_busy_i</obj_property>
+         <obj_property name="ObjectShortName">scan_busy_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/live_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">live_i</obj_property>
+         <obj_property name="ObjectShortName">live_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/mux_select_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">mux_select_o</obj_property>
+         <obj_property name="ObjectShortName">mux_select_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/mux_select_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">mux_select_i</obj_property>
+         <obj_property name="ObjectShortName">mux_select_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_start_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_start_o</obj_property>
+         <obj_property name="ObjectShortName">scan_start_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_abort_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_abort_o</obj_property>
+         <obj_property name="ObjectShortName">scan_abort_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/control/scan_busy_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scan_busy_o</obj_property>
+         <obj_property name="ObjectShortName">scan_busy_o</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>
