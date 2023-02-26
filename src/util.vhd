@@ -844,7 +844,7 @@ for i in STR_LEN downto 1 loop
 		do_mult           := false;    --Minus sign - do not do any number manipulation
 	  end if;
 				 
-	when others => report "Illegal character for conversion from string to integer" severity failure;
+	when others => report "Illegal character for conversion from string to integer: '" & x_str & "'" severity failure;
   end case;
   
   if chr_val >= radix then report "Illegal character at this radix" severity failure; end if;

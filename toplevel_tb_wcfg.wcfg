@@ -23,10 +23,7 @@
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="10" />
-   <wave_markers>
-      <marker time="15958360000000" label="" />
-   </wave_markers>
+   <WVObjectSize size="14" />
    <wvobject fp_name="/toplevel_tb/clk50_i" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">clk50_i</obj_property>
       <obj_property name="ObjectShortName">clk50_i</obj_property>
@@ -107,6 +104,24 @@
          <obj_property name="ObjectShortName">rs232_rx</obj_property>
       </wvobject>
    </wvobject>
+   <wvobject fp_name="group74" type="group">
+      <obj_property name="label">Testimage</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/uut/testimg/sample_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">sample_i</obj_property>
+         <obj_property name="ObjectShortName">sample_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/testimg/data_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_o[15:0]</obj_property>
+         <obj_property name="ObjectShortName">data_o[15:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/testimg/counter" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">counter[15:0]</obj_property>
+         <obj_property name="ObjectShortName">counter[15:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+   </wvobject>
    <wvobject fp_name="group21" type="group">
       <obj_property name="label">VGA</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -148,10 +163,6 @@
             <obj_property name="ElementShortName">v</obj_property>
             <obj_property name="ObjectShortName">v</obj_property>
          </wvobject>
-         <wvobject fp_name="/toplevel_tb/uut/vga/p" type="other" db_ref_id="1">
-            <obj_property name="ElementShortName">p</obj_property>
-            <obj_property name="ObjectShortName">p</obj_property>
-         </wvobject>
          <wvobject fp_name="/toplevel_tb/uut/vga/r" type="logic" db_ref_id="1">
             <obj_property name="ElementShortName">r</obj_property>
             <obj_property name="ObjectShortName">r</obj_property>
@@ -188,7 +199,7 @@
       <wvobject fp_name="/toplevel_tb/uut/vga_gray_o" type="array" db_ref_id="1">
          <obj_property name="ElementShortName">vga_gray_o[7:0]</obj_property>
          <obj_property name="ObjectShortName">vga_gray_o[7:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group55" type="group">
@@ -242,5 +253,43 @@
          <obj_property name="ElementShortName">scan_busy_o</obj_property>
          <obj_property name="ObjectShortName">scan_busy_o</obj_property>
       </wvobject>
+   </wvobject>
+   <wvobject fp_name="group78" type="group">
+      <obj_property name="label">VRAM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/toplevel_tb/uut/video_ram/a_addr_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">a_addr_i[16:0]</obj_property>
+         <obj_property name="ObjectShortName">a_addr_i[16:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/video_ram/a_data_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">a_data_i[7:0]</obj_property>
+         <obj_property name="ObjectShortName">a_data_i[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/video_ram/a_wen_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">a_wen_i</obj_property>
+         <obj_property name="ObjectShortName">a_wen_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/video_ram/b_addr_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">b_addr_i[16:0]</obj_property>
+         <obj_property name="ObjectShortName">b_addr_i[16:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/toplevel_tb/uut/video_ram/b_data_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">b_data_o[7:0]</obj_property>
+         <obj_property name="ObjectShortName">b_data_o[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/uut/pattern/row" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">row[15:0]</obj_property>
+      <obj_property name="ObjectShortName">row[15:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/toplevel_tb/uut/pattern/col" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">col[15:0]</obj_property>
+      <obj_property name="ObjectShortName">col[15:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
 </wave_config>

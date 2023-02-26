@@ -12,7 +12,11 @@ entity ram is
 		RAM_DEPTH 		: integer	:= 2048;		 		-- RAM depth (number of entries), should be a power of 2
 		RAM_PERF		: string	:= "HIGH_PERFORMANCE";	-- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
 		RAM_MODE_A		: string	:= "NO_CHANGE";			-- Select "READ_FIRST", "WRITE_FIRST" or "NO_CHANGE"
-		RAM_MODE_B		: string	:= "NO_CHANGE"			-- Select "READ_FIRST", "WRITE_FIRST" or "NO_CHANGE"
+		RAM_MODE_B		: string	:= "NO_CHANGE";			-- Select "READ_FIRST", "WRITE_FIRST" or "NO_CHANGE"
+		INIT_FILE 		: string	:= ""; 			   		-- Specify name/location of RAM initialization file if using one (leave blank if not)
+		FILE_TYPE		: string	:= "NUMBER";			-- BINARY, VECTOR, NUMBER
+		NUM_SEPARATOR	: character := ' ';
+		NUM_BASE		: integer	:= 16
 	);
 	port(
 		RESET_I		: in	std_logic := '0';
@@ -37,7 +41,124 @@ architecture Behavioral of ram is
 
 type ram_t is array (0 to RAM_DEPTH-1) of std_logic_vector (RAM_WIDTH-1 downto 0);
 
-shared variable ram_array : ram_t := (others => (others => '0'));
+impure function initramfrom_num (filename : in string) return ram_t is                                                   
+	FILE ram_file       : text;
+	variable ram		: ram_t;    
+	variable ramline 	: line;  
+	variable str		: string(1 to 64);
+	variable char		: character;
+	variable int		: integer;
+	variable ok 		: boolean := true;
+	variable C, I		: integer;
+begin                     
+	file_open(ram_file, filename, READ_MODE);
+
+	I := 0;
+	while I < RAM_DEPTH loop
+		if (not endfile(ram_file)) then
+			readline (ram_file, ramline);
+			str := (others => character'val(0)); 
+			C := 1;
+
+			read(ramline, char, ok);
+
+			while ok AND C < str'length 
+			loop
+				if (char /= NUM_SEPARATOR)
+				then
+					str(C) := char;
+					C := C + 1;
+				else
+					int := str2int(str(1 to C-1), NUM_BASE);
+				
+					ram(I) := int2vec(int, RAM_WIDTH);
+	
+					I := I + 1;
+
+					str := (others => character'val(0)); 
+					C := 1;
+				end if;
+
+				read(ramline, char, ok);
+
+			end loop;
+		else
+			ram(I) := int2vec(0, RAM_WIDTH);
+			I := I + 1;
+		end if;
+	end loop;          
+	
+	file_close(ram_file);
+	
+	return ram;                                                  
+end function;
+
+impure function initramfrom_binary (filename : in string) return ram_t is
+	type char_file_t is file of character;
+	file ramfile 	: char_file_t;
+	variable char 	: character;
+	variable byte 	: integer := 0;
+	variable vector : std_logic_vector(RAM_WIDTH-1 downto 0) := (others => '0');
+	variable ram 	: ram_t;
+	variable i 		: integer;
+begin
+	i := 0;
+	file_open(ramfile, filename, READ_MODE);
+	
+	--for i in ram_t'range loop
+	while not endfile(ramfile) AND i < RAM_DEPTH loop
+		for s in 0 to (RAM_WIDTH/8)-1 loop
+			read(ramfile, char);
+			byte := character'pos(char);
+			vector((s+1)*8-1 downto s*8) := int2vec(byte, 8);
+		end loop;
+		
+		ram(i) := int2vec(i, RAM_WIDTH); -- vector; 
+		
+		i := i + 1;
+	end loop;
+	
+	file_close(ramfile);
+	
+	return ram;
+end function;
+
+impure function initramfrom_vector (filename : in string) return ram_t is
+	file ramfile : text is in filename;
+	variable ramline : line;
+	variable ram : ram_t;
+	variable bitvec : bit_vector(RAM_WIDTH-1 downto 0);
+begin
+    for i in ram_t'range loop
+		if not endfile(ramfile) then
+        	readline (ramfile, ramline);
+        	read (ramline, bitvec);
+		end if;
+		
+        ram(i) := to_stdlogicvector(bitvec);
+		
+    end loop;
+    return ram;
+end function;
+
+impure function init_ram(filename : string) return ram_t is
+begin
+    if filename /= "" then
+		case (FILE_TYPE) is
+		when "BINARY"	=> return initramfrom_binary(filename);
+		when "NUMBER"	=> return initramfrom_num(filename);
+		when "VECTOR"	=> return initramfrom_vector(filename);
+		when others		=> return (others => (others => '0'));
+		end case;
+    else
+        return (others => (others => '0'));
+    end if;
+end;
+
+shared variable ram_array : ram_t := init_ram(INIT_FILE);
+
+--attribute RAM_STYLE : string;
+--attribute RAM_STYLE of ram_array: signal is "BLOCK";
 
 signal ram_data_a	: std_logic_vector(RAM_WIDTH-1 downto 0) := (others => '0');
 signal ram_data_b	: std_logic_vector(RAM_WIDTH-1 downto 0) := (others => '0');

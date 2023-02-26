@@ -32,6 +32,7 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 	1		=> '1',	-- 8-Bit Mode
 	2		=> '0', -- Source Select
 	3		=> '0', -- Enable Averaging
+
 	4		=> '1',	-- Invert Values
 	5		=> '1',	-- Shift Range
 	others	=> '0'

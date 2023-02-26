@@ -36,7 +36,9 @@ begin
         dv_delay <= dv_delay(dv_delay'high-1 downto 0) & SAMPLE_I;
         DV_O <= dv_delay(dv_delay'high);
 
-        counter <= counter + '1';
+        if (SAMPLE_I = '1') then
+            counter <= counter + '1';
+        end if;
 
         case (MODE_I) is
             when x"0" =>
@@ -67,14 +69,16 @@ begin
                 DATA_O <= X_I(15 downto 8) & Y_I(15 downto 8);
 
             when x"C" =>
-                DATA_O <= counter;
+                DATA_O <= (others => counter(0));
             when x"D" =>
-                DATA_O <= (15 => COL_I(0), 14 => ROW_I(0), others => '0');
+                DATA_O <= (15 => COL_I(3), 14 => ROW_I(3), 12 => COL_I(2), 11 => ROW_I(2), others => '0');
             when x"E" =>
-                DATA_O <= (15 => ROW_I(0), 14 => COL_I(0), others => '0');
+                DATA_O <= (others => ROW_I(3));
+            when x"F" =>
+                DATA_O <= counter;
 
             when others =>
-                DATA_O <= x"55AA";
+                DATA_O <= x"0000";
 
         end case;
     end if;

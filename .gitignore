@@ -1,4 +1,6 @@
 syntax:glob
+.DAV/
+._DAV/
 _xmsgs/
 isim/
 templates/

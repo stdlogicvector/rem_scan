@@ -8,7 +8,7 @@ entity vga is
 		CLK_I    	: IN STD_LOGIC;
 		RST_I  		: IN STD_LOGIC;
 		
-        ADDR_O      : OUT STD_LOGIC_VECTOR(16 downto 0) := (others => '0');
+        ADDR_O      : OUT STD_LOGIC_VECTOR(12 downto 0) := (others => '0');
         DATA_I      : IN  STD_LOGIC_VECTOR(7 downto 0);
 		
         HSYNC_O     : OUT STD_LOGIC := '1';
@@ -19,6 +19,9 @@ end vga;
 
 architecture Behavioral of vga is
     
+    constant scale      : integer := 8;
+    constant delay      : integer := 3;
+
     constant h_visible  : integer := 800;    
     constant h_front    : integer := 56;
     constant h_sync     : integer := 120;
@@ -36,18 +39,22 @@ architecture Behavioral of vga is
     signal h        : integer range 0 to h_count := 0;
     signal v        : integer range 0 to v_count := 0;
 
-    signal r,c      : std_logic := '0';
+    signal r,c      : integer range 0 to scale-1 := 0;
 
-    signal col      : integer range 0 to h_visible-1 := 0;
-    signal row      : integer range 0 to v_visible-1 := 0;
+    signal col      : integer range 0 to (h_visible/scale)-1 := 0;
+    signal row      : integer range 0 to (v_visible/scale*h_visible/scale)-1 := 0;
 
-    signal hsync    : std_logic_vector(3 downto 0) := (others => '0');
-    signal vsync    : std_logic_vector(3 downto 0) := (others => '0');
+    signal hsync    : std_logic_vector(delay-1 downto 0) := (others => '0');
+    signal vsync    : std_logic_vector(delay-1 downto 0) := (others => '0');
+    signal enable   : std_logic_vector(delay-1 downto 0) := (others => '0');
+
+    signal data     : std_logic_vector(7 downto 0) := (others => '0');
 
 begin
 
 HSYNC_O <= hsync(hsync'high);
 VSYNC_O <= vsync(vsync'high);
+GRAY_O  <= DATA_I when enable(enable'high) = '1' else (others => '0');
 
 process(CLK_I)
 begin
@@ -58,8 +65,9 @@ begin
         else
             hsync(hsync'high downto 1) <= hsync(hsync'high-1 downto 0);
             vsync(vsync'high downto 1) <= vsync(vsync'high-1 downto 0);
+            enable(enable'high downto 1) <= enable(enable'high-1 downto 0);
 
-            ADDR_O  <= int2vec(row + col, 17);
+            ADDR_O  <= int2vec(row + col, 13);
 
             h <= h + 1;
 
@@ -68,10 +76,12 @@ begin
                 v <= v + 1;
                 
                 col <= 0;
-                r   <= not r;
 
-                if (r = '1') then           -- Every second screen row advance one row in RAM
-                    row <= row + h_visible/2;
+                if (r = scale-1) then           -- Every nth screen row advance one row in RAM
+                    r <= 0;
+                    row <= row + (h_visible/scale);
+                else
+                    r <= r + 1;
                 end if;
 
             end if;
@@ -80,22 +90,23 @@ begin
                 v <= 0;
 
                 row <= 0;
-                r   <= '0';
-                c   <= '0';
+                r   <= 0;
+                c   <= 1;
             end if;
 
             if  (v < v_visible)
             and (h < h_visible)
             then
-                c <= not c;
-
-                if (c = '1') then   -- Every second screen pixel advance one pixel in RAM
+                if (c = scale-1) then           -- Every nth screen pixel advance one pixel in RAM
+                    c <= 0;
                     col <= col + 1;
+                else
+                    c <= c + 1;
                 end if;
 
-                GRAY_O  <= DATA_I;
+                enable(0)  <= '1';
             else
-                GRAY_O <= (others => '0');
+                enable(0)  <= '0';
             end if;
 
             if  (h >= (h_visible + h_front))
