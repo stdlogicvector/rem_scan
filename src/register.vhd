@@ -7,7 +7,7 @@ entity registers is
 		NR_OF_REGS	: integer	:= 32;
 		CLOCK_MHZ	: real 		:= 100.0;
 		VERSION		: integer	:= 0;
-		BUILD			: integer	:= 0
+		BUILD		: integer	:= 0
 	);
 	Port (
 		CLK_I 		: in  STD_LOGIC;
@@ -42,6 +42,7 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 2	=> x"0000",		-- Samples to Average
 3	=> x"0000",		-- Delay between Samples for Averaging (10ns steps)
 4	=> x"8000",		-- ADC Value Offset
+5	=> x"0010",		-- ADC Scaling
 
 8	=> x"0100",		-- STEPS X
 9	=> x"0100",		-- STEPS Y

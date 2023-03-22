@@ -44,38 +44,29 @@ begin
             when x"0" =>
                 DATA_O <= COL_I(7 downto 0) & ROW_I(7 downto 0);
             when x"1" =>
-                DATA_O <= COL_I(7 downto 0) & ROW_I(15 downto 8);
-            when x"2" =>
-                DATA_O <= COL_I(15 downto 8) & ROW_I(7 downto 0);
-            when x"3" =>
-                DATA_O <= COL_I(15 downto 8) & ROW_I(15 downto 8);
-
-            when x"4" =>
                 DATA_O <= ROW_I(7 downto 0) & COL_I(7 downto 0);
-            when x"5" =>
-                DATA_O <= ROW_I(7 downto 0) & COL_I(15 downto 8);
-            when x"6" =>
-                DATA_O <= ROW_I(15 downto 8) & COL_I(7 downto 0);
-            when x"7" =>
+            when x"2" =>
+                DATA_O <= COL_I(15 downto 8) & ROW_I(15 downto 8);
+            when x"3" =>
                 DATA_O <= ROW_I(15 downto 8) & COL_I(15 downto 8);
 
-            when x"8" =>
+            when x"4" =>
                 DATA_O <= X_I(7 downto 0) & Y_I(7 downto 0);
-            when x"9" =>
-                DATA_O <= X_I(7 downto 0) & Y_I(15 downto 8);
-            when x"A" =>
+            when x"5" =>
+                DATA_O <= X_I(15 downto 8) & Y_I(15 downto 8);
+            when x"6" =>
                 DATA_O <= X_I(15 downto 8) & Y_I(7 downto 0);
-            when x"B" =>
+            when x"7" =>
                 DATA_O <= X_I(15 downto 8) & Y_I(15 downto 8);
 
-            when x"C" =>
-                DATA_O <= (others => counter(0));
-            when x"D" =>
-                DATA_O <= (15 => COL_I(3), 14 => ROW_I(3), 12 => COL_I(2), 11 => ROW_I(2), others => '0');
-            when x"E" =>
-                DATA_O <= (others => ROW_I(3));
-            when x"F" =>
-                DATA_O <= counter;
+            when x"8" =>
+                DATA_O <= X_I XOR Y_I;
+            when x"9" =>
+                DATA_O <= (others => ROW_I(0));
+            when x"A" =>
+                DATA_O <= (others => COL_I(0));
+            when x"B" =>
+                DATA_O <= (15 => ROW_I(0), 14 => COL_I(0), others => '0');
 
             when others =>
                 DATA_O <= x"0000";

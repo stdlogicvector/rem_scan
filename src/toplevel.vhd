@@ -9,18 +9,22 @@ entity toplevel is
 		BUILD				: integer := 0;
 		SYS_CLK_FREQ		: real    := 100.0;
 		UART_BAUDRATE		: integer := 921600;
-		UART_FLOW_CTRL		: boolean := false;
+		UART_FLOW_CTRL		: boolean := true;
 		UART_CMD_BITS		: integer := 8;
 		UART_CMD_MAX_ARGS	: integer := 4;
 		NR_OF_REGS			: integer := 32;
-		VGA_HEIGHT			: integer := 300;
-		VGA_WIDTH			: integer := 400
+		VGA_HEIGHT			: integer := 75;
+		VGA_WIDTH			: integer := 100
 	);
 	Port (
 		CLK50_I		: in	STD_LOGIC;
 		RST_I		: in	STD_LOGIC;
 		
 		CONTROL_O	: out	STD_LOGIC := '0';		-- Acquire Control over REM (active Low, but inverted by OpenDrain MOSFET)
+		DCDC_EN_O	: out	STD_LOGIC := '0';
+
+		BTN_I		: in	STD_LOGIC_VECTOR(1 downto 0);	-- Active low
+		LED_O		: out	STD_LOGIC := '0';
 		
 		DAC_SCK_O	: out	STD_LOGIC := '0';		-- DAC for X/Y Out
 		DAC_nCS_O	: out	STD_LOGIC := '1';
@@ -36,8 +40,8 @@ entity toplevel is
 		
 		UART_TX_O	: out	STD_LOGIC := '1';		-- Control Interface to PC
 		UART_RX_I	: in	STD_LOGIC;
---		UART_RTS_I	: in	STD_LOGIC;
---		UART_CTS_O	: out	STD_LOGIC := '0';
+		UART_RTS_I	: in	STD_LOGIC;
+		UART_CTS_O	: out	STD_LOGIC := '0';
 --		UART_DTR_I	: in	STD_LOGIC;
 --		UART_DSR_O	: out	STD_LOGIC := '0';
 --		UART_DCD_O	: out	STD_LOGIC := '0';
@@ -47,7 +51,7 @@ entity toplevel is
 		VGA_HSYNC_O	: out	STD_LOGIC := '0';
 		VGA_GRAY_O	: out	STD_LOGIC_VECTOR(7 downto 0) := (others => '0')
 
---		;DBG_O		: out	STD_LOGIC_VECTOR(5 downto 0)
+		;DBG_O		: out	STD_LOGIC_VECTOR(7 downto 0)
 	);
 end toplevel;
 
@@ -139,6 +143,9 @@ signal pat_dv			: std_logic;
 signal pat_x			: std_logic_vector(15 downto 0);
 signal pat_y			: std_logic_vector(15 downto 0);
 
+signal pat_steps_x		: std_logic_vector(15 downto 0);
+signal pat_steps_y		: std_logic_vector(15 downto 0);
+
 -- TRANSFORM
 signal trn_dv			: std_logic;
 signal trn_x			: std_logic_vector(15 downto 0);
@@ -168,6 +175,9 @@ signal adc_data			: std_logic_vector(15 downto 0);
 signal adc_avg_sample	: std_logic;
 signal adc_avg_dv		: std_logic;
 signal adc_avg_data		: std_logic_vector(15 downto 0);
+
+signal adc_proc_dv		: std_logic;
+signal adc_proc_data	: std_logic_vector(15 downto 0);
 
 signal adc_dbg			: std_logic_vector(2 downto 0);
 
@@ -215,8 +225,10 @@ port map (
 	LOCKED_O		=> clk_ready
 );
 
-rst100 <= not RST_I;
+rst100 <= RST_I;
 rst50 <= rst100;
+
+DCDC_EN_O	<= NOT RST_I;
 
 uart : entity work.uart
 generic map (
@@ -231,8 +243,8 @@ port map (
 	RX_I	 		=> UART_RX_I,
 	TX_O 			=> UART_TX_O,
 	
---	CTS_I			=> UART_RTS_I,
---	RTS_O			=> UART_CTS_O,
+	CTS_I			=> UART_RTS_I,
+	RTS_O			=> UART_CTS_O,
 	
 	TX_DONE_O		=> open,
 	
@@ -395,6 +407,20 @@ port map (
 	CTRL_DELAY_I	=> reg(16)
 );
 
+pat_mux : process(clk100)
+begin
+	if rising_edge(clk100)
+	then
+		if live_mode = '1' then
+			pat_steps_x <= int2vec(100, 16);
+			pat_steps_y <= int2vec(75, 16);
+		else
+			pat_steps_x <= reg(8);
+			pat_steps_y <= reg(9);
+		end if;
+	end if;
+end process;
+
 pattern : entity work.pattern 
 port map (
 	CLK_I 		=> clk100,
@@ -404,8 +430,8 @@ port map (
 	ABORT_I		=> pat_abort,
 	BUSY_O 		=> pat_busy,
 
-	STEPS_X_I	=> reg(8),
-	STEPS_Y_I	=> reg(9),
+	STEPS_X_I	=> pat_steps_x,
+	STEPS_Y_I	=> pat_steps_y,
 	DELTA_X_I	=> reg(10),
 	DELTA_Y_I	=> reg(11),
 	
@@ -519,26 +545,6 @@ port map (
 	DATA_O		=> tst_data
 );
 
-average : entity work.average
-port map (
-	CLK_I		=> clk100,
-	RST_I		=> rst100,
-
-	ENABLE_I	=> reg(0)(3),
-	ABORT_I		=> pat_abort,
-
-	NUMBER_I	=> reg(2)(7 downto 0),
-	DELAY_I		=> reg(3),
-
-	SAMPLE_I	=> adc_avg_sample,
-	DV_O		=> adc_avg_dv,
-	DATA_O		=> adc_avg_data,
-
-	SAMPLE_O	=> adc_sample,
-	DV_I		=> adc_dv,
-	DATA_I		=> adc_data
-);
-
 adc : entity work.adc
 port map (
 	CLK_I		=> clk100,
@@ -567,10 +573,6 @@ port map (
 	RST_I		=> rst100,
 
 	CHANNEL_I	=> reg(0)(0),
-	INVERT_I	=> reg(0)(4),
-	SHIFT_I		=> reg(0)(5),
-
-	OFFSET_I	=> reg(4),
 
 	DV_O		=> adc_dv,
 	DATA_O		=> adc_data,
@@ -578,6 +580,45 @@ port map (
 	DV_I		=> adc_ch_dv,
 	CH0_DATA_I	=> adc_ch0,
 	CH1_DATA_I	=> adc_ch1
+);
+
+sig_proc : entity work.sig_proc
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> rst100,
+
+	INVERT_I	=> reg(0)(4),
+	SHIFT_I		=> reg(0)(5),
+	SCALE_I		=> reg(0)(6),
+	
+	OFFSET_I	=> reg(4),
+	FACTOR_I	=> reg(5)(7 downto 0),
+
+	DV_O		=> adc_proc_dv,
+	DATA_O		=> adc_proc_data,
+
+	DV_I		=> adc_dv,
+	DATA_I		=> adc_data
+);
+
+average : entity work.average
+port map (
+	CLK_I		=> clk100,
+	RST_I		=> rst100,
+
+	ENABLE_I	=> reg(0)(3),
+	ABORT_I		=> pat_abort,
+
+	NUMBER_I	=> reg(2)(7 downto 0),
+	DELAY_I		=> reg(3),
+
+	SAMPLE_I	=> adc_avg_sample,
+	DV_O		=> adc_avg_dv,
+	DATA_O		=> adc_avg_data,
+
+	SAMPLE_O	=> adc_sample,
+	DV_I		=> adc_proc_dv,
+	DATA_I		=> adc_proc_data
 );
 
 source_mux : entity work.source_mux
@@ -611,13 +652,13 @@ port map (
 	DV_I		=> vid_dv,
 	DATA_I		=> vid_data,
 
-	CH0_SENT_I		=> uart_sent,
-	CH0_DV_O		=> uart_dv,
-	CH0_DATA_O		=> uart_data,
+	CH0_SENT_I	=> uart_sent,
+	CH0_DV_O	=> uart_dv,
+	CH0_DATA_O	=> uart_data,
 
-	CH1_SENT_I		=> live_sent,
-	CH1_DV_O		=> live_dv,
-	CH1_DATA_O		=> live_data
+	CH1_SENT_I	=> live_sent,
+	CH1_DV_O	=> live_dv,
+	CH1_DATA_O	=> live_data
 );
 
 live_sent <= '1';
@@ -630,6 +671,9 @@ generic map (
 	RAM_PERF	=> "HIGH_PERFORMANCE",
 	RAM_MODE_A	=> "WRITE_FIRST",
 	RAM_MODE_B	=> "READ_FIRST"
+	,INIT_FILE	=> "splash_text.ram"
+	,FILE_TYPE	=> "NUMBER"
+	,NUM_BASE	=> 10
 )
 port map (
 	RESET_I		=> rst100,
@@ -658,8 +702,6 @@ port map (
 	GRAY_O		=> VGA_GRAY_O
 );
 
---TODO: Video Signal Processing (LUT?, Brightness/Contrast?)
-
 video : entity work.video_tx
 port map (
 	CLK_I 		=> clk100,
@@ -677,7 +719,9 @@ port map (
 	TX_FULL_I	=> video_tx_full
 );
 
---DBG_O <= (
+DBG_O <= (
+	0	=> scan_busy,
+	1	=> pat_busy,
 --	0	=> adc_sample,
 --	1	=> adc_conv,
 --	2	=> ADC_SD0_I,
@@ -685,8 +729,8 @@ port map (
 --	1	=> adc_dbg(0),
 --	2	=> adc_dbg(1),
 --	3	=> adc_dbg(2),
---	others => '0'
---);
+	others => '0'
+);
 
 end rem_scan;
 
