@@ -211,7 +211,7 @@ signal live_data		: std_logic_vector(15 downto 0);
 signal live_sent		: std_logic;
 
 -- VGA
-signal vga_dv			: std_logic;
+signal vga_read			: std_logic;
 signal vga_addr			: std_logic_vector(VID_ADDR_W-1 downto 0);
 signal vga_data			: std_logic_vector(7 downto 0);
 
@@ -725,7 +725,7 @@ port map (
 	A_ADDR_I	=> live_addr,
 	A_DATA_I	=> live_data(15 downto 8),
 
-	B_DV_O		=> vga_dv,
+	B_RD_I		=> vga_read,
 	B_ADDR_I	=> vga_addr,
 	B_DATA_O	=> vga_data
 );
@@ -735,7 +735,8 @@ port map (
 	CLK_I		=> clk100,
 	RST_I		=> rst100,
 
-	DV_I		=> vga_dv,
+--	DV_I		=> vga_dv,
+	READ_O		=> vga_read,
 	ADDR_O		=> vga_addr,
 	DATA_I		=> vga_data,
 
@@ -776,7 +777,7 @@ DBG_O <= (
 	0	=> live_mode,
 	1	=> live_dv,
 	2	=> live_sent,
-	3	=> vga_dv,
+	3	=> vga_read,
 	4	=> vid_sent,
 	5	=> vid_dv,
 	6	=> pat_sample,

@@ -151,7 +151,7 @@ BEGIN
 	
 	sram : entity work.sram_sim
 	generic map (
-		download_on_power_up	=> false,
+		download_on_power_up	=> true,
 		clear_on_power_up		=> true, 
 		
 		size		=> 2**19,

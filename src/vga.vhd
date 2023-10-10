@@ -8,7 +8,8 @@ entity vga is
 		CLK_I    	: IN STD_LOGIC;
 		RST_I  		: IN STD_LOGIC;
 		
-        DV_I        : IN  STD_LOGIC := '1';
+--        DV_I        : IN  STD_LOGIC := '1';
+		READ_O		: OUT STD_LOGIC := '0';
         ADDR_O      : OUT STD_LOGIC_VECTOR(18 downto 0) := (others => '0');
         DATA_I      : IN  STD_LOGIC_VECTOR(7 downto 0);
 		
@@ -36,6 +37,8 @@ architecture Behavioral of vga is
     constant v_count    : integer := v_visible + v_front + v_sync + v_back - 1;
 
     constant pixels     : integer := h_visible * v_visible - 1;
+	
+	signal dv		: std_logic := '0';
 
     signal h        : integer range 0 to h_count := 0;
     signal v        : integer range 0 to v_count := 0;
@@ -56,6 +59,7 @@ begin
 HSYNC_O <= hsync(hsync'high);
 VSYNC_O <= vsync(vsync'high);
 GRAY_O  <= DATA_I when enable(enable'high) = '1' else (others => '0');
+READ_O	<= hsync(hsync'high);
 
 process(CLK_I)
 begin
@@ -70,7 +74,9 @@ begin
 
             ADDR_O  <= int2vec(row + col, 19);
 
-            if (DV_I = '1') then
+			dv <= not dv;	-- Divide Clock by 2
+
+            if (dv = '1') then
                 h <= h + 1;
             end if;
 
@@ -94,21 +100,24 @@ begin
 
                 row <= 0;
                 r   <= 0;
-					 if (scale > 1) then
-						c   <= 1;
-					 end if;
+				
+				if (scale > 1) then
+					c   <= 1;
+				end if;
             end if;
 
             if  (v < v_visible)
             and (h < h_visible)
             then
-                if (c = scale-1) then           -- Every nth screen pixel advance one pixel in RAM
-                    c <= 0;
-                    col <= col + 1;
-                else
-                    c <= c + 1;
-                end if;
-
+				if (dv = '1') then
+					if (c = scale-1) then           -- Every nth screen pixel advance one pixel in RAM
+						c <= 0;
+						col <= col + 1;
+					else
+						c <= c + 1;
+					end if;
+				end if;
+	
                 enable(0)  <= '1';
             else
                 enable(0)  <= '0';

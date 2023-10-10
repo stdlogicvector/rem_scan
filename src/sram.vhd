@@ -23,7 +23,7 @@ entity sram is
         A_ADDR_I    : IN    STD_LOGIC_VECTOR(DEPTH-1 downto 0);
         A_DATA_I    : IN    STD_LOGIC_VECTOR(WIDTH-1 downto 0);
 
-        B_DV_O      : OUT   STD_LOGIC := '0';
+        B_RD_I      : IN  	STD_LOGIC;
         B_ADDR_I    : IN    STD_LOGIC_VECTOR(DEPTH-1 downto 0);
         B_DATA_O    : OUT   STD_LOGIC_VECTOR(WIDTH-1 downto 0)
 	);
@@ -36,10 +36,23 @@ constant WRITE : std_logic := '0';
 
 signal RW : std_logic := READ;
 
-signal A_DATA : std_logic_vector(WIDTH-1 downto 0);
-signal B_DATA : std_logic_vector(WIDTH-1 downto 0);
+signal R_DATA	: std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+signal W_DATA	: std_logic_vector(WIDTH-1 downto 0) := (others => '0');
 
-signal A_WR : std_logic := '0';
+signal F_DATA	: std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+signal F_ADDR	: std_logic_vector(DEPTH-1 downto 0) := (others => '0');
+signal F_READ 	: std_logic := '0';
+signal F_VALID	: std_logic := '0';
+signal F_EMPTY	: std_logic := '0';
+
+type state_t is (
+	S_IDLE,
+	S_READ,
+	S_WRITE_GET,
+	S_WRITE
+);
+
+signal state	: state_t := S_IDLE;
 
 begin
 
@@ -51,40 +64,72 @@ data_io : for i in 0 to WIDTH-1 generate
 		SLEW 		=> "FAST"
 	)
     port map (
-        O   => B_DATA(i),
-        I   => A_DATA_I(i),
+        O   => R_DATA(i),
+        I   => W_DATA(i),
         T   => RW,			-- 1 = input, 0 = output
         IO  => RAM_DATA_IO(i)
     );
 end generate;
 
+fifo : entity work.vga_fifo
+port map (
+	clk		=> CLK_I,
+	rst		=> RST_I,
+	
+	din		=> A_ADDR_I & A_DATA_I,
+	wr_en	=> A_WR_I,
+	wr_ack	=> A_ACK_O,
+	full	=> open,
+	
+	dout(WIDTH-1 downto 0)				=> F_DATA,
+	dout(DEPTH+WIDTH-1 downto WIDTH)	=> F_ADDR,
+	rd_en	=> F_READ,
+	valid	=> F_VALID,
+	empty	=> F_EMPTY	
+);
+
 -- Always selected
 RAM_nCE_O <= RST_I;
+RAM_nOE_O <= not RW;	-- Outputs enabled = 0
 
 process(CLK_I)
 begin
     if rising_edge(CLK_I) then
-        RW <= not RW;
-
-        if (RW = READ) then             				-- Next Cycle will be write
-			B_DATA_O	<= B_DATA;
-			B_DV_O		<= '1';          				-- Valid Data on Read Port
+		F_READ <= '0';
+		RAM_nWE_O <= '1';
+	
+		case (state) is
+		when S_IDLE =>
+			if (B_RD_I = '1') then
+				state <= S_READ;
+				RW <= READ;
+			elsif (F_EMPTY = '0') then
+				F_READ <= '1';
+				state <= S_WRITE_GET;
+				RW <= WRITE;
+			end if;
+			
+		when S_READ =>
+			B_DATA_O	<= R_DATA;
+			RAM_ADDR_O	<= B_ADDR_I;
+			
+			if (B_RD_I = '0') then
+				state <= S_IDLE;
+			end if;
 		
-            RAM_ADDR_O	<= A_ADDR_I;     				-- Output Write Address
-            RAM_nWE_O	<= not (A_WR_I OR A_WR);   		-- Write Enable = low for writing
-            RAM_nOE_O	<= '1';          				-- Disable Outputs for Writing
-            A_ACK_O		<= A_WR_I OR A_WR; 				-- Acknowledge Write Request
-        else                            				-- Next Cycle will be read
-			B_DV_O		<= '0';          				-- No Valid Data on Read Port			
-		
-            RAM_ADDR_O	<= B_ADDR_I;     				-- Output Read Address
-			RAM_nWE_O	<= '1';			 				-- Write Enable = low for writing
-            RAM_nOE_O	<= '0';          				-- Enable Outputs for Reading
-            A_ACK_O		<= '0';          				-- No Write Ack
-
-
-			A_WR		<= A_WR_I;
-        end if;
+		when S_WRITE_GET =>
+			RAM_ADDR_O	<= F_ADDR;
+			W_DATA		<= F_DATA;
+			
+			if (F_VALID = '1') then
+				state <= S_WRITE;
+			end if;
+			
+		when S_WRITE =>
+			RAM_nWE_O <= '0';
+			state <= S_IDLE;
+			
+		end case;
     end if;
 end process;
 
