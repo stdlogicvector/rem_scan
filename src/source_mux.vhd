@@ -11,14 +11,17 @@ entity source_mux is
 		CHANNEL_I	: in	STD_LOGIC := '0';
 		
         SAMPLE_I    : in	STD_LOGIC;
+		SENT_I		: in	STD_LOGIC := '0';
         DV_O        : out   STD_LOGIC := '0';
         DATA_O      : out   STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
 
         CH0_SAMPLE_O: out   STD_LOGIC := '0';
+		CH0_SENT_O	: out	STD_LOGIC := '0';
         CH0_DV_I    : in    STD_LOGIC;
         CH0_DATA_I  : in    STD_LOGIC_VECTOR(15 downto 0);
 
         CH1_SAMPLE_O: out   STD_LOGIC := '0';
+		CH1_SENT_O	: out	STD_LOGIC := '0';
         CH1_DV_I    : in    STD_LOGIC := '0';
         CH1_DATA_I  : in    STD_LOGIC_VECTOR(15 downto 0) := (others => '0')
 	);
@@ -34,12 +37,18 @@ begin
         if (CHANNEL_I = '0') then
             CH0_SAMPLE_O <= SAMPLE_I;
             CH1_SAMPLE_O <= '0';
+			
+			CH0_SENT_O	<= SENT_I;
+			CH1_SENT_O	<= '0';
 
             DV_O    <= CH0_DV_I;
             DATA_O  <= CH0_DATA_I;
         else
             CH1_SAMPLE_O <= SAMPLE_I;
             CH0_SAMPLE_O <= '0';
+			
+			CH1_SENT_O	<= SENT_I;
+			CH0_SENT_O	<= '0';
 
             DV_O    <= CH1_DV_I;
             DATA_O  <= CH1_DATA_I;

@@ -8,7 +8,8 @@ entity vga is
 		CLK_I    	: IN STD_LOGIC;
 		RST_I  		: IN STD_LOGIC;
 		
-        ADDR_O      : OUT STD_LOGIC_VECTOR(12 downto 0) := (others => '0');
+        DV_I        : IN  STD_LOGIC := '1';
+        ADDR_O      : OUT STD_LOGIC_VECTOR(18 downto 0) := (others => '0');
         DATA_I      : IN  STD_LOGIC_VECTOR(7 downto 0);
 		
         HSYNC_O     : OUT STD_LOGIC := '1';
@@ -19,7 +20,7 @@ end vga;
 
 architecture Behavioral of vga is
     
-    constant scale      : integer := 8;
+    constant scale      : integer := 1;
     constant delay      : integer := 3;
 
     constant h_visible  : integer := 800;    
@@ -67,9 +68,11 @@ begin
             vsync(vsync'high downto 1) <= vsync(vsync'high-1 downto 0);
             enable(enable'high downto 1) <= enable(enable'high-1 downto 0);
 
-            ADDR_O  <= int2vec(row + col, 13);
+            ADDR_O  <= int2vec(row + col, 19);
 
-            h <= h + 1;
+            if (DV_I = '1') then
+                h <= h + 1;
+            end if;
 
             if (h = h_count) then
                 h <= 0;
@@ -91,7 +94,9 @@ begin
 
                 row <= 0;
                 r   <= 0;
-                c   <= 1;
+					 if (scale > 1) then
+						c   <= 1;
+					 end if;
             end if;
 
             if  (v < v_visible)

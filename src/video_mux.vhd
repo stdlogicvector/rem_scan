@@ -32,7 +32,7 @@ process(CLK_I)
 begin
     if rising_edge(CLK_I) then
         if (CHANNEL_I = '0') then
-            SENT_O  <= CH0_SENT_I;
+            SENT_O  		<= CH0_SENT_I;
 
             CH0_DV_O    <= DV_I;
             CH0_DATA_O  <= DATA_I;

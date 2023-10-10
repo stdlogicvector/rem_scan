@@ -68,7 +68,7 @@ signal reg	: array16_t(0 to NR_OF_REGS-1) := (
 25 => x"0000",		-- Transform Matrix f
 
 28	=> int2vec(integer(CLOCK_MHZ), 16),		-- Sys Clk (MHz)
-29	=> int2vec(1, 16),						-- PCB VERSION 
+29	=> int2vec(2, 16),						-- PCB VERSION 
 30	=> int2vec(VERSION, 16),				-- FPGA VERSION
 31	=> int2vec(BUILD, 16),					-- FPGA BUILD
 others => x"0000"

@@ -67,6 +67,15 @@ begin
                 DATA_O <= (others => COL_I(0));
             when x"B" =>
                 DATA_O <= (15 => ROW_I(0), 14 => COL_I(0), others => '0');
+					 
+			when x"C" =>
+				DATA_O <= x"0000";
+			when x"D" =>
+				DATA_O <= x"5555";
+			when x"E" =>
+				DATA_O <= x"AAAA";
+			when x"F" =>
+				DATA_O <= x"FFFF";
 
             when others =>
                 DATA_O <= x"0000";

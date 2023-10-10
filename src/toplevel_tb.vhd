@@ -7,7 +7,7 @@ END toplevel_tb;
  
 ARCHITECTURE behavior OF toplevel_tb IS 
 	signal CLK50_I		: std_logic := '0';
-	signal RST_I		: std_logic := '0';
+	signal RST_I		: std_logic := '1';
    
 	signal CONTROL_O	: std_logic;
 	
@@ -23,9 +23,15 @@ ARCHITECTURE behavior OF toplevel_tb IS
 	signal ADC_SD0_I	: std_logic := '0';
 	signal ADC_SD1_I	: std_logic := '0';
    
-	signal RS232_TX		: std_logic;
+	signal RS232_TX		: std_logic := '1';
 	signal RS232_RX		: std_logic := '0';
 	
+	signal RAM_ADDR		: std_logic_vector(18 downto 0) := (others => '0');
+	signal RAM_DATA		: std_logic_vector( 7 downto 0) := (others => '0');
+	signal RAM_nOE		: std_logic;
+	signal RAM_nWE		: std_logic;
+	signal RAM_nCE		: std_logic;
+		
 	constant clk_period	: time := 20 ns;
 	
 	constant UART_BAUDRATE : integer := 921600;
@@ -53,17 +59,22 @@ ARCHITECTURE behavior OF toplevel_tb IS
 		log("Aborting Scan");
 		uart_puts("{X}", uart, UART_BAUDRATE);
 	end procedure;
+	
+	type ram_t is array (0 to (2**19)-1) of std_logic_vector (7 downto 0);
+	signal ram : ram_t := (others => (others => '0'));
  
 BEGIN
    	sim : process
 	begin		
-		RST_I <= '0';
-		wait for 100 ns;	
 		RST_I <= '1';
+		wait for 100 ns;	
+		RST_I <= '0';
 
-		wait for clk_period*10;
+		wait for clk_period*500;
 
-		--setReg(16, 20, RS232_TX);	-- CTRL Delay = 20*2560ns
+		setReg(16, 2, RS232_TX);	-- CTRL Delay = 2*2560ns
+		setReg(0, 55, RS232_TX);
+		setReg(1, 13, RS232_TX);
 		
 		--scan_start(RS232_TX);
 		live_start(RS232_TX);
@@ -78,13 +89,16 @@ BEGIN
  
 	uut : entity work.toplevel
 	generic map (
-		UART_BAUDRATE	=> UART_BAUDRATE
+		UART_BAUDRATE	=> UART_BAUDRATE,
+		UART_FLOW_CTRL	=> false
 	)
 	port map (
 		CLK50_I			=> CLK50_I,
 		RST_I			=> RST_I,
 		
 		CONTROL_O		=> CONTROL_O,
+		BTN_I			=> (others => '0'),
+		LED_O			=> open,
 		
 		DAC_SCK_O		=> DAC_SCK_O,
 		DAC_nCS_O		=> DAC_nCS_O,
@@ -100,10 +114,20 @@ BEGIN
 		
 		UART_TX_O		=> RS232_RX,
 		UART_RX_I		=> RS232_TX,
+		UART_RTS_I		=> '0',
+		UART_CTS_O		=> open,
 		
 		VGA_VSYNC_O		=> open,
 		VGA_HSYNC_O		=> open,
-		VGA_GRAY_O		=> open
+		VGA_GRAY_O		=> open,
+		
+		RAM_ADDR_O		=> RAM_ADDR,
+		RAM_DATA_IO		=> RAM_DATA,
+		RAM_nOE_O		=> RAM_nOE,
+		RAM_nWE_O		=> RAM_nWE,
+		RAM_nCE_O		=> RAM_nCE,
+		
+		DBG_O			=> open
 	);
 
 	dac : entity work.tb_dac
@@ -122,5 +146,24 @@ BEGIN
 		SCK_I		=> ADC_SCK_O,
 		SD0_O		=> ADC_SD0_I,
 		SD1_O		=> ADC_SD1_I
+	);
+	
+	
+	sram : entity work.sram_sim
+	generic map (
+		download_on_power_up	=> false,
+		clear_on_power_up		=> true, 
+		
+		size		=> 2**19,
+		adr_width	=> 19,
+		width		=> 8
+	)
+	port map (
+		nCE			=> RAM_nCE,
+		nOE			=> RAM_nOE,
+		nWE			=> RAM_nWE,
+		
+		A			=> RAM_ADDR,
+		D			=> RAM_DATA
 	);
 END;

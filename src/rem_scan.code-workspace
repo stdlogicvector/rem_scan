@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "../../../../web/rem_scan"
+			"path": ".."
 		},
 		{
-			"path": "."
+			"path": "S:/rem_scan"
 		}
 	],
 	"settings": {}

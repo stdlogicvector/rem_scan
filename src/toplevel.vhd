@@ -13,15 +13,15 @@ entity toplevel is
 		UART_CMD_BITS		: integer := 8;
 		UART_CMD_MAX_ARGS	: integer := 4;
 		NR_OF_REGS			: integer := 32;
-		VGA_HEIGHT			: integer := 75;
-		VGA_WIDTH			: integer := 100
+		VGA_WIDTH			: integer := 800;
+		VGA_HEIGHT			: integer := 600		
 	);
 	Port (
 		CLK50_I		: in	STD_LOGIC;
 		RST_I		: in	STD_LOGIC;
 		
 		CONTROL_O	: out	STD_LOGIC := '0';		-- Acquire Control over REM (active Low, but inverted by OpenDrain MOSFET)
-		DCDC_EN_O	: out	STD_LOGIC := '0';
+		DCDC_EN_O	: out	STD_LOGIC := '1';
 
 		BTN_I		: in	STD_LOGIC_VECTOR(1 downto 0);	-- Active low
 		LED_O		: out	STD_LOGIC := '0';
@@ -49,7 +49,13 @@ entity toplevel is
 		
 		VGA_VSYNC_O	: out	STD_LOGIC := '0';
 		VGA_HSYNC_O	: out	STD_LOGIC := '0';
-		VGA_GRAY_O	: out	STD_LOGIC_VECTOR(7 downto 0) := (others => '0')
+		VGA_GRAY_O	: out	STD_LOGIC_VECTOR(7 downto 0) := (others => '0');
+
+		RAM_ADDR_O	: out	STD_LOGIC_VECTOR(18 downto 0) := (others => '0');
+		RAM_DATA_IO : inout STD_LOGIC_VECTOR(7 downto 0) := (others => '0');
+		RAM_nOE_O	: out	STD_LOGIC := '1';
+		RAM_nWE_O	: out	STD_LOGIC := '1';
+		RAM_nCE_O	: out	STD_LOGIC := '1'
 
 		;DBG_O		: out	STD_LOGIC_VECTOR(7 downto 0)
 	);
@@ -60,8 +66,8 @@ architecture rem_scan of toplevel is
 signal clk100			: std_logic := '0';
 signal rst100			: std_logic := '1';
 
-signal clk50			: std_logic := '0';
-signal rst50			: std_logic := '1';
+--signal clk50			: std_logic := '0';
+--signal rst50			: std_logic := '1';
 
 signal clk_ready		: std_logic := '0';
 
@@ -174,6 +180,7 @@ signal adc_data			: std_logic_vector(15 downto 0);
 
 signal adc_avg_sample	: std_logic;
 signal adc_avg_dv		: std_logic;
+signal adc_avg_sent		: std_logic;
 signal adc_avg_data		: std_logic_vector(15 downto 0);
 
 signal adc_proc_dv		: std_logic;
@@ -183,6 +190,7 @@ signal adc_dbg			: std_logic_vector(2 downto 0);
 
 -- TESTIMG
 signal tst_dv			: std_logic;
+signal tst_sent			: std_logic;
 signal tst_data			: std_logic_vector(15 downto 0);
 signal tst_sample		: std_logic;
 
@@ -203,6 +211,7 @@ signal live_data		: std_logic_vector(15 downto 0);
 signal live_sent		: std_logic;
 
 -- VGA
+signal vga_dv			: std_logic;
 signal vga_addr			: std_logic_vector(VID_ADDR_W-1 downto 0);
 signal vga_data			: std_logic_vector(7 downto 0);
 
@@ -214,21 +223,22 @@ generic map (
 	DIFF_CLK_IN		=> false,
 	CLKFB_MULT		=> 20,
 	DIVCLK_DIVIDE	=> 1,
-	CLK_OUT_DIVIDE	=> ( 0 => 10, 1 => 20, others => 1 )
+	CLK_OUT_DIVIDE	=> ( 0 => 10, others => 1 )
 )
 port map (
 	CLK_Ip			=> CLK50_I,
 	
 	CLK0_O			=> clk100,	-- 50MHz * 20 / 10 = 100MHz
-	CLK1_O			=> clk50,
+--	CLK1_O			=> clk50,
 	
 	LOCKED_O		=> clk_ready
 );
 
 rst100 <= RST_I;
-rst50 <= rst100;
 
 DCDC_EN_O	<= NOT RST_I;
+
+LED_O <= pat_busy;
 
 uart : entity work.uart
 generic map (
@@ -412,8 +422,8 @@ begin
 	if rising_edge(clk100)
 	then
 		if live_mode = '1' then
-			pat_steps_x <= int2vec(100, 16);
-			pat_steps_y <= int2vec(75, 16);
+			pat_steps_x <= int2vec(VGA_WIDTH, 16);
+			pat_steps_y <= int2vec(VGA_HEIGHT, 16);
 		else
 			pat_steps_x <= reg(8);
 			pat_steps_y <= reg(9);
@@ -618,7 +628,7 @@ port map (
 
 	SAMPLE_O	=> adc_sample,
 	DV_I		=> adc_proc_dv,
-	DATA_I		=> adc_proc_data
+	DATA_I		=> adc_proc_data 
 );
 
 source_mux : entity work.source_mux
@@ -629,16 +639,19 @@ port map (
 	CHANNEL_I	=> reg(0)(2),
 
 	SAMPLE_I	=> pat_sample,
+	SENT_I		=> vid_sent,
 	DV_O		=> vid_dv,
 	DATA_O		=> vid_data,
 
-	CH0_SAMPLE_O	=> adc_avg_sample,
-	CH0_DV_I		=> adc_avg_dv,
-	CH0_DATA_I		=> adc_avg_data,
+	CH0_SAMPLE_O=> adc_avg_sample,
+	CH0_SENT_O	=> adc_avg_sent,
+	CH0_DV_I	=> adc_avg_dv,
+	CH0_DATA_I	=> adc_avg_data,
 
-	CH1_SAMPLE_O	=> tst_sample,
-	CH1_DV_I		=> tst_dv,
-	CH1_DATA_I		=> tst_data
+	CH1_SAMPLE_O=> tst_sample,
+	CH1_SENT_O	=> tst_sent,
+	CH1_DV_I	=> tst_dv,
+	CH1_DATA_I	=> tst_data
 );
 
 video_mux : entity work.video_mux
@@ -661,39 +674,68 @@ port map (
 	CH1_DATA_O	=> live_data
 );
 
-live_sent <= '1';
+--live_sent <= '1';
+--live_addr <= pat_pix(VID_ADDR_W-1 downto 0);
+--
+--video_ram : entity work.ram
+--generic map (
+--	RAM_WIDTH	=> 8,
+--	RAM_DEPTH	=> 2**VID_ADDR_W,
+--	RAM_PERF	=> "HIGH_PERFORMANCE",
+--	RAM_MODE_A	=> "WRITE_FIRST",
+--	RAM_MODE_B	=> "READ_FIRST"
+--	,INIT_FILE	=> "splash_text.ram"
+--	,FILE_TYPE	=> "NUMBER"
+--	,NUM_BASE	=> 10
+--)
+--port map (
+--	RESET_I		=> rst100,
+--
+--	A_CLK_I		=> clk100,
+--	A_WEN_I		=> live_dv,
+--	A_ADDR_I	=> live_addr,
+--	A_DATA_I	=> live_data(15 downto 8),
+--
+--	B_CLK_I		=> clk50,
+--	B_WEN_I		=> '0',
+--	B_ADDR_I	=> vga_addr,
+--	B_DATA_O	=> vga_data
+--);
+
+
 live_addr <= pat_pix(VID_ADDR_W-1 downto 0);
 
-video_ram : entity work.ram
+video_ram : entity work.sram
 generic map (
-	RAM_WIDTH	=> 8,
-	RAM_DEPTH	=> 2**VID_ADDR_W,
-	RAM_PERF	=> "HIGH_PERFORMANCE",
-	RAM_MODE_A	=> "WRITE_FIRST",
-	RAM_MODE_B	=> "READ_FIRST"
-	,INIT_FILE	=> "splash_text.ram"
-	,FILE_TYPE	=> "NUMBER"
-	,NUM_BASE	=> 10
+	WIDTH	=> 8,
+	DEPTH	=> 19
 )
 port map (
-	RESET_I		=> rst100,
+	CLK_I		=> clk100,
+	RST_I		=> rst100,
 
-	A_CLK_I		=> clk100,
-	A_WEN_I		=> live_dv,
+	RAM_nWE_O	=> RAM_nWE_O,
+	RAM_nCE_O	=> RAM_nCE_O,
+	RAM_nOE_O	=> RAM_nOE_O,
+	RAM_ADDR_O	=> RAM_ADDR_O,
+	RAM_DATA_IO => RAM_DATA_IO,
+
+	A_WR_I		=> live_dv,
+	A_ACK_O		=> live_sent,
 	A_ADDR_I	=> live_addr,
 	A_DATA_I	=> live_data(15 downto 8),
 
-	B_CLK_I		=> clk50,
-	B_WEN_I		=> '0',
+	B_DV_O		=> vga_dv,
 	B_ADDR_I	=> vga_addr,
 	B_DATA_O	=> vga_data
 );
 
 vga : entity work.vga
 port map (
-	CLK_I		=> clk50,
-	RST_I		=> rst50,
+	CLK_I		=> clk100,
+	RST_I		=> rst100,
 
+	DV_I		=> vga_dv,
 	ADDR_O		=> vga_addr,
 	DATA_I		=> vga_data,
 
@@ -719,16 +761,27 @@ port map (
 	TX_FULL_I	=> video_tx_full
 );
 
+--TODO: Traceback Delay AFTER jump!!
+
 DBG_O <= (
-	0	=> scan_busy,
-	1	=> pat_busy,
 --	0	=> adc_sample,
 --	1	=> adc_conv,
 --	2	=> ADC_SD0_I,
 --	3	=> ADC_SD1_I,
---	1	=> adc_dbg(0),
---	2	=> adc_dbg(1),
---	3	=> adc_dbg(2),
+--	4	=> adc_dbg(0),
+--	5	=> adc_dbg(1),
+--	6	=> adc_dbg(2),
+--	7	=> pat_busy,
+
+	0	=> live_mode,
+	1	=> live_dv,
+	2	=> live_sent,
+	3	=> vga_dv,
+	4	=> vid_sent,
+	5	=> vid_dv,
+	6	=> pat_sample,
+	7	=> pat_start,
+
 	others => '0'
 );
 

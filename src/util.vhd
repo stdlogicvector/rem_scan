@@ -499,7 +499,7 @@ end function mac2vec;
 function to_hstring(v : std_logic_vector) return string is
 	variable value	: std_logic_vector(4*div_ceil(v'length, 4) - 1 downto 0);
 	variable digit	: std_logic_vector(3 downto 0);
-	variable result	: string(1 to 4) := "    ";--(1 to div_ceil(v'length, 4));
+	variable result	: string(1 to div_ceil(v'length, 4));
 	variable j		: natural;
 begin
 	value := zero_resize(v, value'length);
