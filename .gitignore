@@ -7,12 +7,15 @@ templates/
 xst/
 simulation/
 doc/
+misc/
+binary/
 implement/
 example_design/
 ipcore_dir/*.vhd
 ipcore_dir/*.sym
 ipcore_dir/*.vho
 ipcore_dir/*.tcl
+ipcore_dir/tmp/
 *.xreport
 *.txt
 *.cmd

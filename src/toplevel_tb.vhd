@@ -31,6 +31,8 @@ ARCHITECTURE behavior OF toplevel_tb IS
 	signal RAM_nOE		: std_logic;
 	signal RAM_nWE		: std_logic;
 	signal RAM_nCE		: std_logic;
+
+	signal FLASH_DQ_IO	: std_logic_vector(3 downto 0) := (others => 'L');
 		
 	constant clk_period	: time := 20 ns;
 	
@@ -70,7 +72,7 @@ BEGIN
 		wait for 100 ns;	
 		RST_I <= '0';
 
-		wait for clk_period*500;
+		wait for 400 us;
 
 		setReg(16, 2, RS232_TX);	-- CTRL Delay = 2*2560ns
 		setReg(0, 55, RS232_TX);
@@ -90,7 +92,8 @@ BEGIN
 	uut : entity work.toplevel
 	generic map (
 		UART_BAUDRATE	=> UART_BAUDRATE,
-		UART_FLOW_CTRL	=> false
+		UART_FLOW_CTRL	=> false,
+		SIMULATION		=> true
 	)
 	port map (
 		CLK50_I			=> CLK50_I,
@@ -127,8 +130,13 @@ BEGIN
 		RAM_nWE_O		=> RAM_nWE,
 		RAM_nCE_O		=> RAM_nCE,
 		
+		FLASH_CS_O		=> open,
+		FLASH_DQ_IO		=> FLASH_DQ_IO,
+		
 		DBG_O			=> open
 	);
+	
+	FLASH_DQ_IO <= (others => 'L');
 
 	dac : entity work.tb_dac
 	port map (
@@ -147,7 +155,6 @@ BEGIN
 		SD0_O		=> ADC_SD0_I,
 		SD1_O		=> ADC_SD1_I
 	);
-	
 	
 	sram : entity work.sram_sim
 	generic map (
