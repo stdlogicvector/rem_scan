@@ -29,6 +29,7 @@ entity uart is
 		PUT_ACK_O	: out 	STD_LOGIC := '0';
 		TX_CHAR_I	: in 	STD_LOGIC_VECTOR(DATA_BITS-1 downto 0);
 		TX_FULL_O	: out	STD_LOGIC := '0';
+		TX_EMPTY_O	: out	STD_LOGIC := '0';
 		
 		GET_CHAR_I	: in	STD_LOGIC;
 		GET_ACK_O	: out	STD_LOGIC := '0';
@@ -134,7 +135,8 @@ begin
 	end if;
 end process;
 
-TX_FULL_O <= tx_fifo_full;	
+TX_FULL_O	<= tx_fifo_full;
+TX_EMPTY_O	<= tx_fifo_empty;
 	
 input : process(CLK_I)		-- Put chars into TX FIFO
 begin
@@ -196,7 +198,7 @@ begin
 			case tx_state is
 			when S_TX_IDLE =>
 				if (CTS_I = '0' OR FLOW_CTRL = FALSE) then	-- CTS is active LOW
-					if (tx_fifo_empty = '0') then	-- FIFO not empty -> send chars
+					if (tx_fifo_empty = '0') then			-- FIFO not empty -> send chars
 						tx_fifo_read	<= '1';
 						tx_state 		<= S_TX_READ;
 					end if;

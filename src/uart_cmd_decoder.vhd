@@ -44,7 +44,8 @@ entity uart_cmd_decoder is
 
 		LIVE_O			: out	std_logic := '0';
 
-		INIT_O			: out	std_logic := '0'
+		INIT_O			: out	std_logic := '0';
+		INIT_ADDR_O		: out	std_logic_vector(23 downto 0) := int2vec(256*2048, 24)
 	);
 end uart_cmd_decoder;
 
@@ -60,6 +61,7 @@ constant START_SCAN		: character := 'S';
 constant ABORT_SCAN		: character := 'X';
 constant START_LIVE		: character := 'L';
 constant INIT			: character := 'I';
+constant INIT_ADDR		: character := 'A';
 
 --------------------------------------------------------------------------------
 
@@ -69,6 +71,7 @@ constant id_scan_start	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(STAR
 constant id_scan_abort	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(ABORT_SCAN);
 constant id_live_start	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(START_LIVE);
 constant id_init		: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(INIT);
+constant id_init_addr	: std_logic_vector(DATA_BITS-1 downto 0) := char2vec(INIT_ADDR);
 
 -- Control Signals
 
@@ -168,6 +171,11 @@ begin
 				when id_init =>
 					INIT_O <= '1';
 		
+				when id_init_addr =>
+					INIT_ADDR_O(23 downto 16) <= cmd_args(0);
+					INIT_ADDR_O(15 downto  8) <= cmd_args(1);
+					INIT_ADDR_O( 7 downto  0) <= cmd_args(2);
+		
 				when others =>
 					NULL;
 				end case;
@@ -211,7 +219,8 @@ begin
 				when id_reg_write		|
 					  id_scan_abort		|
 					  id_live_start		|
-					  id_init			=>
+					  id_init			|
+					  id_init_addr		=>
 					NEW_ACK_O	<= '1';				
 									
 				when id_scan_start =>

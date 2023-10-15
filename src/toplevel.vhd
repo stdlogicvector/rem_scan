@@ -5,8 +5,8 @@ use work.util.all;
 
 entity toplevel is
 	Generic (
-		VERSION				: integer := 16#0101#;	-- v01.00
-		BUILD				: integer := 0;
+		VERSION				: integer := 16#0204#;	-- v02.04
+		BUILD				: integer := 3;
 		SYS_CLK_FREQ		: real    := 100.0;
 		UART_BAUDRATE		: integer := 921600;
 		UART_FLOW_CTRL		: boolean := true;
@@ -59,7 +59,7 @@ entity toplevel is
 		RAM_nCE_O	: out	STD_LOGIC := '1';
 		
 		FLASH_CS_O	: out	STD_LOGIC := '1';
---		FLASH_SCK_O	: out	STD_LOGIC := '0';
+		FLASH_SCK_O	: out	STD_LOGIC := '0';
 		FLASH_DQ_IO	: inout	STD_LOGIC_VECTOR(3 downto 0) := (others => 'Z')
 
 		;DBG_O		: out	STD_LOGIC_VECTOR(7 downto 0)
@@ -80,12 +80,15 @@ signal clk_ready		: std_logic := '0';
 signal uart_arb_nack	: std_logic;
 signal uart_arb_ack		: std_logic;
 
+signal uart_tx			: std_logic;
+
 signal uart_tx_done		: std_logic;
 
 signal uart_put			: std_logic;
 signal uart_put_ack		: std_logic;
 signal uart_put_char	: std_logic_vector(7 downto 0);
 signal uart_put_full	: std_logic;
+signal uart_put_empty	: std_logic;
 
 signal cmd_put_char		: std_logic;
 signal cmd_put_ack		: std_logic;
@@ -281,6 +284,8 @@ DCDC_EN_O	<= NOT RST_I;
 
 LED_O <= pat_busy;
 
+UART_TX_O <= uart_tx;
+
 uart : entity work.uart
 generic map (
 	CLK_MHZ			=> SYS_CLK_FREQ,
@@ -292,17 +297,18 @@ port map (
 	RST_I 			=> rst100,
 	
 	RX_I	 		=> UART_RX_I,
-	TX_O 			=> UART_TX_O,
+	TX_O 			=> uart_tx,	--UART_TX_O,
 	
 	CTS_I			=> UART_RTS_I,
 	RTS_O			=> UART_CTS_O,
 	
-	TX_DONE_O		=> open,
+	TX_DONE_O		=> uart_tx_done,
 	
 	PUT_CHAR_I		=> uart_put,
 	PUT_ACK_O		=> uart_put_ack,
 	TX_CHAR_I		=> uart_put_char,
 	TX_FULL_O		=> uart_put_full,
+	TX_EMPTY_O		=> uart_put_empty,
 	
 	GET_CHAR_I		=> uart_get,
 	GET_ACK_O		=> uart_get_ack,
@@ -337,7 +343,8 @@ port map (
 	PUT_CHAR_O		=> uart_put,
 	PUT_ACK_I		=> uart_put_ack,
 	TX_CHAR_O		=> uart_put_char,
-	TX_FULL_I		=> uart_put_full
+	TX_FULL_I		=> uart_put_full,
+	TX_EMPTY_I		=> uart_put_empty
 );
 
 uart_decoder : entity work.uart_decoder
@@ -825,6 +832,7 @@ port map (
 	RESET_I			=> rst100,
 	
 	nCS_O			=> FLASH_CS_O,
+	SCK_O			=> FLASH_SCK_O,
 	DQ_IO			=> FLASH_DQ_IO,
 
 	NEW_CMD_I		=> flash_new_cmd,
@@ -875,14 +883,25 @@ port map (
 );
 
 DBG_O <= (
-	0	=> adc_sample,
-	1	=> adc_conv,
-	2	=> ADC_SD0_I,
-	3	=> ADC_SD1_I,
-	4	=> adc_dbg(0),
-	5	=> adc_dbg(1),
-	6	=> adc_dbg(2),
+
+	0	=> video_put_char,
+	1	=> video_put_ack,
+	2	=> video_tx_full,
+	3	=> uart_put_empty,
+	
+	4	=> uart_tx,
+	5	=> UART_RTS_I,
+	6	=> mux_selected,
 	7	=> pat_busy,
+	
+--	0	=> adc_sample,
+--	1	=> adc_conv,
+--	2	=> ADC_SD0_I,
+--	3	=> ADC_SD1_I,
+--	4	=> adc_dbg(0),
+--	5	=> adc_dbg(1),
+--	6	=> adc_dbg(2),
+--	7	=> pat_busy,
 
 --	0	=> live_mode,
 --	1	=> live_dv,

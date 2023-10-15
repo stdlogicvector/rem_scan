@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "S:/rem_scan"
+		},
+		{
+			"path": "../../../platformio/teensy/REMctrl"
 		}
 	],
 	"settings": {}

@@ -15,6 +15,7 @@ entity flash_wrapper is
 		RESET_I		: in	std_logic;
 		
 		nCS_O		: out	std_logic := '1';
+		SCK_O		: out	std_logic := '0';
 		DQ_IO		: inout	std_logic_vector(3 downto 0);
 		
 		NEW_CMD_I	: in	std_logic;
@@ -121,15 +122,17 @@ port map (
 	T	=> '1'    				-- 3-state enable input, high=input, low=output 
 );
 
-cfg_pins : STARTUP_SPARTAN6
-port map (
-  CFGCLK	=> open,		-- 1-bit output: Configuration logic main clock output.
-  CFGMCLK	=> open,		-- 1-bit output: Configuration internal oscillator clock output.
-  EOS		=> open,		-- 1-bit output: Active high output signal indicates the End Of Configuration.
-  CLK		=> sck_i,		-- 1-bit input: User startup-clock input
-  GSR		=> '0',			-- 1-bit input: Global Set/Reset input (GSR cannot be used for the port name)
-  GTS		=> '0',			-- 1-bit input: Global 3-state input (GTS cannot be used for the port name)
-  KEYCLEARB	=> '0'			-- 1-bit input: Clear AES Decrypter Key input from Battery-Backed RAM (BBRAM)
-);
+SCK_O <= sck_i;
+
+--cfg_pins : STARTUP_SPARTAN6
+--port map (
+--  CFGCLK	=> open,		-- 1-bit output: Configuration logic main clock output.
+--  CFGMCLK	=> open,		-- 1-bit output: Configuration internal oscillator clock output.
+--  EOS		=> open,		-- 1-bit output: Active high output signal indicates the End Of Configuration.
+--  CLK		=> sck_i,		-- 1-bit input: User startup-clock input
+--  GSR		=> '0',			-- 1-bit input: Global Set/Reset input (GSR cannot be used for the port name)
+--  GTS		=> '0',			-- 1-bit input: Global 3-state input (GTS cannot be used for the port name)
+--  KEYCLEARB	=> '1'			-- 1-bit input: Clear AES Decrypter Key input from Battery-Backed RAM (BBRAM)
+--);
 
 end architecture;

@@ -47,7 +47,7 @@ attribute fsm_encoding of state : signal is "gray";
 signal sck		: STD_LOGIC := '0';
 signal inited	: STD_LOGIC := '0';
 
-constant timedout : integer := 120;
+constant timedout : integer := 255;
 signal timeout	  : integer range 0 to timedout := 0;
 
 begin
@@ -70,24 +70,28 @@ begin
 			
 			case state is
 			when INIT =>
---				if (SD0_I = '0') OR (SD1_I = '0') then
---					state <= WAIT_STATE;
---				elsif (inited = '1') then
---					state <= IDLE;
---				end if;
-
-				if (SD0_I = '1') AND (SD1_I = '1') then
-					inited <= '1';
-					state <= IDLE;
+				if (timeout = timedout) then	
+					timeout <= 0;
+					
+					if (SD0_I = '1') AND (SD1_I = '1') then
+						inited <= '1';
+						state <= IDLE;
+					else
+						inited <= '0';
+						state <= WAIT_STATE;
+					end if;
 				end if;
 
-				timeout  <= 0;
 				data_bit <= 0;
 				sck <= '0';
 
 			when IDLE =>
 				if (SAMPLE_I = '1') then
-					state	 <= WAIT_STATE;
+					state	<= WAIT_STATE;
+				end if;
+
+				if (SD0_I = '0') OR (SD1_I = '0') then
+					state	<= INIT;
 				end if;
 
 				timeout  <= 0;

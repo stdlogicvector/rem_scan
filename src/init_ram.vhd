@@ -17,6 +17,8 @@ entity init_ram is
 		INIT_I			: in	std_logic := '0';
 		DONE_O			: out	std_logic := '0';
 		
+		ADDRESS_I		: in	std_logic_vector(23 downto 0) := int2vec(ADDRESS, 24);
+		
 		RAM_nWE_O   	: out   std_logic := '1';
         RAM_nCE_O   	: out   std_logic := '1';
         RAM_nOE_O   	: out   std_logic := '1';
@@ -51,7 +53,7 @@ type state_t is (
 	S_DONE
 );
 
-signal state	: state_t := S_INIT;
+signal state		: state_t := S_INIT;
 
 signal flash_data	: std_logic_vector(31 downto 0) := (others => '0');
 signal byte			: integer range 0 to 3 := 0;
@@ -76,10 +78,12 @@ begin
 		
 		case (state) is
 		when S_INIT =>
-			if (FL_BUSY_I = '0') then
+			ram_addr <= (others => '0');
+
+ 			if (FL_BUSY_I = '0') then
 				FL_NEW_CMD_O<= '1';
 				FL_CMD_O	<= x"AD";
-				FL_DATA_O	<= int2vec(ADDRESS, 32);
+				FL_DATA_O	<= x"00" & ADDRESS_I;
 				
 				state <= S_SET_ADDR;
 			end if;
@@ -116,10 +120,10 @@ begin
 			RAM_ADDR_O	<= ram_addr;
 			
 			case (byte) is
-			when 0 => RAM_DATA_O	<= flash_data( 7 downto  0);
-			when 1 => RAM_DATA_O	<= flash_data(15 downto  8);
-			when 2 => RAM_DATA_O	<= flash_data(23 downto 16);
-			when 3 => RAM_DATA_O	<= flash_data(31 downto 24);
+			when 3 => RAM_DATA_O	<= flash_data( 7 downto  0);
+			when 2 => RAM_DATA_O	<= flash_data(15 downto  8);
+			when 1 => RAM_DATA_O	<= flash_data(23 downto 16);
+			when 0 => RAM_DATA_O	<= flash_data(31 downto 24);
 			end case;
 			
 			state <= S_WRITE;

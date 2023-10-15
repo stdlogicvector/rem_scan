@@ -30,7 +30,8 @@ entity uart_mux is
 		PUT_CHAR_O	: out	STD_LOGIC := '0';
 		PUT_ACK_I	: in 	STD_LOGIC;
 		TX_CHAR_O	: out 	STD_LOGIC_VECTOR(DATA_BITS-1 downto 0) := (others => '0');
-		TX_FULL_I	: in	STD_LOGIC
+		TX_FULL_I	: in	STD_LOGIC;
+		TX_EMPTY_I	: in	STD_LOGIC
 	);
 end uart_mux;
 
@@ -79,8 +80,9 @@ begin
 				end if;
 				
 			when S_WAIT =>
-				if (selected = '0' AND BUSY0_I = '0')
-				OR (selected = '1' AND BUSY1_I = '0')
+				if ((selected = '0' AND BUSY0_I = '0')
+				OR  (selected = '1' AND BUSY1_I = '0'))
+				AND (TX_EMPTY_I = '1')
 				then
 					selected	<= selection;
 					state		<= S_IDLE;
