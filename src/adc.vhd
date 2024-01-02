@@ -46,6 +46,7 @@ attribute fsm_encoding of state : signal is "gray";
 
 signal sck		: STD_LOGIC := '0';
 signal inited	: STD_LOGIC := '0';
+signal sample	: STD_LOGIC := '0';
 
 constant timedout : integer := 255;
 signal timeout	  : integer range 0 to timedout := 0;
@@ -73,6 +74,7 @@ begin
 				if (timeout = timedout) then	
 					timeout <= 0;
 					
+					-- The AD7903 sometimes has problems reaching its idle state properly
 					if (SD0_I = '1') AND (SD1_I = '1') then
 						inited <= '1';
 						state <= IDLE;
@@ -82,12 +84,14 @@ begin
 					end if;
 				end if;
 
+				sample	<= '0';
 				data_bit <= 0;
 				sck <= '0';
 
 			when IDLE =>
 				if (SAMPLE_I = '1') then
 					state	<= WAIT_STATE;
+					sample	<= '1';
 				end if;
 
 				if (SD0_I = '0') OR (SD1_I = '0') then
@@ -141,8 +145,9 @@ begin
 				CH0_O <= ch0_reg;
 				CH1_O <= ch1_reg;
 				
-				DV_O	<= inited;
+				DV_O	<= inited AND sample;
 				
+				sample	<= '0';
 				timeout	<= 0;
 				state	<= WAIT_FOR_IDLE;
 
