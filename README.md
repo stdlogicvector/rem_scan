@@ -2,8 +2,8 @@
 
 ## Open Source Scan Controller for SEMs
 
-PCB: https://github.com/stdlogicvector/rem_scan_pcb
-GUI: https://github.com/stdlogicvector/rem_scan_gui
+- PCB: https://github.com/stdlogicvector/rem_scan_pcb
+- GUI: https://github.com/stdlogicvector/rem_scan_gui
 
 The scan controller features two 16bit DACs to steer the electron beam of an SEM and two 16bit ADCs to acquire the image signal from up to two detectors.
 
